@@ -40,9 +40,7 @@ function updateBullets() {
   bullets.forEach((b, index) => {
     b.x += b.speed; // 横方向だけ移動
     b.element.style.left = b.x + "px";
-    b.element.style.top = b.y + "px";
-
-    // 画面外に出たら削除
+   // 画面外に出たら削除
     if (b.x < -50) {
       b.element.remove();
       bullets.splice(index, 1);
@@ -89,10 +87,12 @@ function handleHit() {
 
 // キーボード入力
 document.addEventListener("keydown", (e) => {
+<<<<<<< Updated upstream
   // 弾発射は常に有効
   if (e.key === "Shift") {
     shootBullet();
   }
+
 
   // プレイヤー操作禁止中は移動・背景スクロールを無効
   if (isHit) return;
@@ -104,7 +104,6 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "ArrowRight") bgX -= 10;
   gameArea.style.backgroundPosition = bgX + "px 0px";
 
-
   // 上下移動制限
   playerY = Math.max(0, Math.min(window.innerHeight - player.offsetHeight, playerY));
 
@@ -113,8 +112,7 @@ document.addEventListener("keydown", (e) => {
   gameArea.style.backgroundPosition = bgX + "px 0px";
 });
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
+
 // マウスの動きに合わせてプレイヤーを移動
 document.addEventListener("mousemove", (e) => {
   if (isHit) return; // 被弾中は操作不可
@@ -128,9 +126,6 @@ document.addEventListener("mousemove", (e) => {
   player.style.top = playerY + "px";
 });
 
-=======
-=======
->>>>>>> Stashed changes
 //プレイヤーをカーソル移動
 // マウスの動きに合わせてプレイヤーを移動
 let cursorX = window.innerWidth / 2;
@@ -201,10 +196,7 @@ startCountdown();
 
 
 
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
+
 
 // メインループ
 setInterval(() => {
