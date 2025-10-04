@@ -85,6 +85,7 @@ function polygonsCollide(polyA, polyB) {
   }
   return true;
 }
+
 function projectPolygon(polygon, axis) {
   const dots = polygon.map(p => (p.x * axis.x + p.y * axis.y));
   return [Math.min(...dots), Math.max(...dots)];
@@ -104,16 +105,9 @@ function shootBullet() {
   bullet.src = "../image/bind.png";
   bullet.className = "bullet";
   gameArea.appendChild(bullet);
-
   const startWorldX = -bgX + enemy.offsetLeft;
   const startWorldY = enemyY + enemy.offsetHeight / 2 - 20;
-
-  bullets.push({
-    element: bullet,
-    worldX: startWorldX,
-    worldY: startWorldY,
-    speed: -15
-  });
+  bullets.push({ element: bullet, worldX: startWorldX, worldY: startWorldY, speed: -15 });
 }
 
 function updateBullets() {
@@ -158,7 +152,6 @@ function handleHit() {
   result.classList.add("shake");
   result.style.display = "block";
   player.style.display = "none";
-
   setTimeout(() => {
     result.style.display = "none";
     result.classList.remove("shake");
@@ -173,12 +166,10 @@ function handleHit() {
 document.addEventListener("keydown", (e) => {
   if (e.key === "Shift") shootBullet();
   if (isHit) return;
-
   if (e.key === "ArrowUp") playerY -= 10;
   if (e.key === "ArrowDown") playerY += 10;
   if (e.key === "ArrowLeft") bgX += 10;
   if (e.key === "ArrowRight") bgX -= 10;
-
   playerY = Math.max(0, Math.min(window.innerHeight - player.offsetHeight, playerY));
   player.style.top = playerY + "px";
   gameArea.style.backgroundPosition = bgX + "px 0px";
@@ -199,6 +190,7 @@ document.addEventListener("mousemove", (e) => {
 //==============================
 setInterval(() => {
   if (!gameStarted) return;
+
   moveEnemy();
   updateBullets();
 
@@ -214,15 +206,35 @@ setInterval(() => {
     if (cursorX > playerCenterX + 10) bgX -= 5;
     else if (cursorX < playerCenterX - 10) bgX += 5;
     gameArea.style.backgroundPosition = bgX + "px 0px";
+
+    if (timeLeft <= 0) updateGoalPosition();
   }
 }, 20);
 
 //==============================
-// カウントダウンと残り時間タイマー
+// カウントダウンとゲーム開始
+//==============================
+function startCountdown() {
+  const countdownEl = document.getElementById("countdown");
+  let count = 3;
+  countdownEl.innerText = count;
+  let timer = setInterval(() => {
+    count--;
+    if (count > 0) countdownEl.innerText = count;
+    else if (count === 0) countdownEl.innerText = "START!";
+    else {
+      clearInterval(timer);
+      countdownEl.style.display = "none";
+      gameStarted = true;
+    }
+  }, 1000);
+}
+startCountdown();
+
+//==============================
+// タイマー・ゴール表示
 //==============================
 let timeLeft = 10;
-
-// タイマー表示（最初から表示）
 const timerElement = document.createElement("div");
 timerElement.style.position = "absolute";
 timerElement.style.top = "20px";
@@ -234,53 +246,28 @@ timerElement.style.zIndex = "9999";
 timerElement.textContent = `残り時間: ${timeLeft}`;
 gameArea.appendChild(timerElement);
 
-// ゴール表示
 const goal = document.createElement("img");
 goal.src = "../image/ゴール.png";
 goal.className = "sprite";
 goal.style.display = "none";
-goal.style.left = "50%";
+goal.style.position = "absolute";
 goal.style.top = "50%";
-goal.style.transform = "translate(-50%, -50%)";
-goal.style.zIndex = "9999";
+goal.style.transform = "translateY(-50%)";
+goal.style.zIndex = "1";
 gameArea.appendChild(goal);
 
-// スタートカウント表示
-let startCount = 3;
-const startTimer = document.createElement("div");
-startTimer.style.position = "absolute";
-startTimer.style.top = "50%";
-startTimer.style.left = "50%";
-startTimer.style.transform = "translate(-50%, -50%)";
-startTimer.style.color = "yellow";
-startTimer.style.fontSize = "80px";
-startTimer.style.fontFamily = "monospace";
-startTimer.style.zIndex = "9999";
-startTimer.textContent = startCount;
-gameArea.appendChild(startTimer);
+// 背景に追従するゴール
+function updateGoalPosition() {
+  goal.style.left = `${50 + bgX / window.innerWidth * 50}%`;
+}
 
-// スタートカウントダウン
-const startInterval = setInterval(() => {
-  startCount--;
-  if (startCount > 0) startTimer.textContent = startCount;
-  else if (startCount === 0) startTimer.textContent = "START!";
-  else {
-    clearInterval(startInterval);
-    startTimer.remove();
-    gameStarted = true;
-    startMainTimer();
+// タイマー開始
+const timerInterval = setInterval(() => {
+  if (isHit) return;
+  timeLeft--;
+  timerElement.textContent = `残り時間: ${timeLeft}`;
+  if (timeLeft <= 0) {
+    clearInterval(timerInterval);
+    goal.style.display = "block";
   }
 }, 1000);
-
-// 残り時間タイマー本処理
-function startMainTimer() {
-  const timerInterval = setInterval(() => {
-    if (isHit) return;
-    timeLeft--;
-    timerElement.textContent = `残り時間: ${timeLeft}`;
-    if (timeLeft <= 0) {
-      clearInterval(timerInterval);
-      goal.style.display = "block";
-    }
-  }, 1000);
-}
