@@ -1,0 +1,57 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@600&family=Zen+Maru+Gothic:wght@500&display=swap');
+
+body {
+  margin: 0;
+  height: 100vh;
+  background: url(".../images/61d20471b5964f44.png") no-repeat center center/cover;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  font-family: 'Zen Maru Gothic', sans-serif;
+}
+
+.title-container {
+  text-align: center;
+  background: rgba(255, 255, 255, 0.4);
+  padding: 40px 80px;
+  border-radius: 25px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(8px);
+  animation: fadeIn 2s ease;
+}
+
+.main-title {
+  font-size: 4rem;
+  color: #2b6cb0;
+  margin-bottom: 10px;
+  font-family: 'Noto Serif JP', serif;
+  letter-spacing: 0.2em;
+}
+
+.subtitle {
+  font-size: 1.2rem;
+  color: #1a202c;
+  margin-bottom: 30px;
+}
+
+.start-button {
+  font-size: 1.1rem;
+  padding: 12px 30px;
+  color: white;
+  background: linear-gradient(135deg, #4fd1c5, #3182ce);
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.start-button:hover {
+  transform: scale(1.05);
+  background: linear-gradient(135deg, #63b3ed, #4299e1);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
