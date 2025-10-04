@@ -60,7 +60,6 @@ const hitboxData = {
 function getPolygonFromJSON(element, type) {
   const json = hitboxData[type];
   const rect = element.getBoundingClientRect();
-
   return json.map(p => ({
     x: rect.left + p.nx * rect.width,
     y: rect.top + p.ny * rect.height
@@ -79,16 +78,13 @@ function polygonsCollide(polyA, polyB) {
       const edgeX = polygon[k].x - polygon[j].x;
       const edgeY = polygon[k].y - polygon[j].y;
       const normal = { x: -edgeY, y: edgeX };
-
       let [minA, maxA] = projectPolygon(polyA, normal);
       let [minB, maxB] = projectPolygon(polyB, normal);
-
       if (maxA < minB || maxB < minA) return false;
     }
   }
   return true;
 }
-
 function projectPolygon(polygon, axis) {
   const dots = polygon.map(p => (p.x * axis.x + p.y * axis.y));
   return [Math.min(...dots), Math.max(...dots)];
@@ -99,9 +95,7 @@ function projectPolygon(polygon, axis) {
 //==============================
 function moveEnemy() {
   enemyY += enemySpeed;
-  if (enemyY <= 0 || enemyY >= window.innerHeight - 100) {
-    enemySpeed *= -1;
-  }
+  if (enemyY <= 0 || enemyY >= window.innerHeight - 100) enemySpeed *= -1;
   enemy.style.top = enemyY + "px";
 }
 
@@ -111,7 +105,6 @@ function shootBullet() {
   bullet.className = "bullet";
   gameArea.appendChild(bullet);
 
-  // 背景基準で位置を記録
   const startWorldX = -bgX + enemy.offsetLeft;
   const startWorldY = enemyY + enemy.offsetHeight / 2 - 20;
 
@@ -123,23 +116,18 @@ function shootBullet() {
   });
 }
 
-// 弾の更新
 function updateBullets() {
   bullets.forEach((b, index) => {
-    b.worldX += b.speed; // 背景基準で移動
-
-    // 背景スクロールに合わせて表示位置を変換
+    b.worldX += b.speed;
     b.element.style.left = (b.worldX + bgX) + "px";
     b.element.style.top = b.worldY + "px";
 
-    // 画面外に出たら削除
     if (b.worldX + bgX < -50) {
       b.element.remove();
       bullets.splice(index, 1);
       return;
     }
 
-    // ==== 当たり判定（ポリゴン同士） ====
     if (!isHit) {
       const bulletRect = b.element.getBoundingClientRect();
       const bulletPoly = [
@@ -149,7 +137,6 @@ function updateBullets() {
         {x: bulletRect.left, y: bulletRect.bottom}
       ];
       const playerPoly = getPolygonFromJSON(player, "free");
-
       if (polygonsCollide(playerPoly, bulletPoly)) {
         handleHit();
         b.element.remove();
@@ -231,29 +218,11 @@ setInterval(() => {
 }, 20);
 
 //==============================
-// カウントダウンとゲーム開始
-//==============================
-function startCountdown() {
-  const countdownEl = document.getElementById("countdown");
-  let count = 3;
-  countdownEl.innerText = count;
-  let timer = setInterval(() => {
-    count--;
-    if (count > 0) countdownEl.innerText = count;
-    else if (count === 0) countdownEl.innerText = "START!";
-    else {
-      clearInterval(timer);
-      countdownEl.style.display = "none";
-      gameStarted = true;
-    }
-  }, 1000);
-}
-startCountdown();
-
-//==============================
-// タイマー・ゴール表示
+// カウントダウンと残り時間タイマー
 //==============================
 let timeLeft = 10;
+
+// タイマー表示（最初から表示）
 const timerElement = document.createElement("div");
 timerElement.style.position = "absolute";
 timerElement.style.top = "20px";
@@ -265,6 +234,7 @@ timerElement.style.zIndex = "9999";
 timerElement.textContent = `残り時間: ${timeLeft}`;
 gameArea.appendChild(timerElement);
 
+// ゴール表示
 const goal = document.createElement("img");
 goal.src = "../image/ゴール.png";
 goal.className = "sprite";
@@ -275,12 +245,42 @@ goal.style.transform = "translate(-50%, -50%)";
 goal.style.zIndex = "9999";
 gameArea.appendChild(goal);
 
-const timerInterval = setInterval(() => {
-  if (isHit) return;
-  timeLeft--;
-  timerElement.textContent = `残り時間: ${timeLeft}`;
-  if (timeLeft <= 0) {
-    clearInterval(timerInterval);
-    goal.style.display = "block";
+// スタートカウント表示
+let startCount = 3;
+const startTimer = document.createElement("div");
+startTimer.style.position = "absolute";
+startTimer.style.top = "50%";
+startTimer.style.left = "50%";
+startTimer.style.transform = "translate(-50%, -50%)";
+startTimer.style.color = "yellow";
+startTimer.style.fontSize = "80px";
+startTimer.style.fontFamily = "monospace";
+startTimer.style.zIndex = "9999";
+startTimer.textContent = startCount;
+gameArea.appendChild(startTimer);
+
+// スタートカウントダウン
+const startInterval = setInterval(() => {
+  startCount--;
+  if (startCount > 0) startTimer.textContent = startCount;
+  else if (startCount === 0) startTimer.textContent = "START!";
+  else {
+    clearInterval(startInterval);
+    startTimer.remove();
+    gameStarted = true;
+    startMainTimer();
   }
 }, 1000);
+
+// 残り時間タイマー本処理
+function startMainTimer() {
+  const timerInterval = setInterval(() => {
+    if (isHit) return;
+    timeLeft--;
+    timerElement.textContent = `残り時間: ${timeLeft}`;
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      goal.style.display = "block";
+    }
+  }, 1000);
+}
