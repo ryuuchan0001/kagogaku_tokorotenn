@@ -10,8 +10,93 @@ let enemyY = 100;
 let enemySpeed = 2;
 let bullets = [];
 let isHit = false;
+let gameStarted = false;
 
-// 敵の上下移動
+//==============================
+// 当たり判定ポリゴンデータ(JSON)
+//==============================
+const hitboxData = {
+  "free": [
+    { "nx": 0.3, "ny": 0.2822916507720947 },
+    { "nx": 0.35, "ny": 0.35729165077209474 },
+    { "nx": 0.64375, "ny": 0.3760416507720947 },
+    { "nx": 0.64375, "ny": 0.3447916507720947 },
+    { "nx": 0.725, "ny": 0.3322916507720947 },
+    { "nx": 0.7375, "ny": 0.3760416507720947 },
+    { "nx": 0.8375, "ny": 0.36979165077209475 },
+    { "nx": 0.8375, "ny": 0.6322916507720947 },
+    { "nx": 0.475, "ny": 0.6385416507720947 },
+    { "nx": 0.1875, "ny": 0.6322916507720947 },
+    { "nx": 0.18125, "ny": 0.33854165077209475 },
+    { "nx": 0.225, "ny": 0.3322916507720947 }
+  ],
+  "bind": [
+    { "nx": 0.665, "ny": 0.24305553436279298 },
+    { "nx": 0.88, "ny": 0.20972220102945963 },
+    { "nx": 0.8, "ny": 0.3763888676961263 },
+    { "nx": 0.91, "ny": 0.5347222010294597 },
+    { "nx": 0.89, "ny": 0.7597222010294596 },
+    { "nx": 0.8, "ny": 0.818055534362793 },
+    { "nx": 0.66, "ny": 0.718055534362793 },
+    { "nx": 0.4, "ny": 0.8347222010294596 },
+    { "nx": 0.32, "ny": 0.693055534362793 },
+    { "nx": 0.16, "ny": 0.8263888676961263 },
+    { "nx": 0.1, "ny": 0.6513888676961263 },
+    { "nx": 0.09, "ny": 0.2013888676961263 },
+    { "nx": 0.175, "ny": 0.2263888676961263 },
+    { "nx": 0.355, "ny": 0.6597222010294597 },
+    { "nx": 0.355, "ny": 0.19305553436279296 },
+    { "nx": 0.4, "ny": 0.21805553436279296 },
+    { "nx": 0.41, "ny": 0.368055534362793 },
+    { "nx": 0.515, "ny": 0.368055534362793 },
+    { "nx": 0.49, "ny": 0.2263888676961263 },
+    { "nx": 0.57, "ny": 0.2013888676961263 }
+  ]
+};
+
+//==============================
+// 座標変換付きポリゴン生成
+//==============================
+function getPolygonFromJSON(element, type) {
+  const json = hitboxData[type];
+  const rect = element.getBoundingClientRect();
+
+  return json.map(p => ({
+    x: rect.left + p.nx * rect.width,
+    y: rect.top + p.ny * rect.height
+  }));
+}
+
+//==============================
+// SAT法ポリゴン判定
+//==============================
+function polygonsCollide(polyA, polyB) {
+  const polys = [polyA, polyB];
+  for (let i = 0; i < polys.length; i++) {
+    const polygon = polys[i];
+    for (let j = 0; j < polygon.length; j++) {
+      const k = (j + 1) % polygon.length;
+      const edgeX = polygon[k].x - polygon[j].x;
+      const edgeY = polygon[k].y - polygon[j].y;
+      const normal = { x: -edgeY, y: edgeX };
+
+      let [minA, maxA] = projectPolygon(polyA, normal);
+      let [minB, maxB] = projectPolygon(polyB, normal);
+
+      if (maxA < minB || maxB < minA) return false;
+    }
+  }
+  return true;
+}
+
+function projectPolygon(polygon, axis) {
+  const dots = polygon.map(p => (p.x * axis.x + p.y * axis.y));
+  return [Math.min(...dots), Math.max(...dots)];
+}
+
+//==============================
+// 敵の動き・弾の処理
+//==============================
 function moveEnemy() {
   enemyY += enemySpeed;
   if (enemyY <= 0 || enemyY >= window.innerHeight - 100) {
@@ -20,44 +105,42 @@ function moveEnemy() {
   enemy.style.top = enemyY + "px";
 }
 
-// 弾発射
-// 弾発射
 function shootBullet() {
   const bullet = document.createElement("img");
   bullet.src = "../image/しばる.png";
   bullet.className = "bullet";
   gameArea.appendChild(bullet);
 
-  // 敵の画面上の位置から発射
-  const startX = enemy.offsetLeft; 
+  const startX = enemy.offsetLeft;
   const startY = enemyY + enemy.offsetHeight / 2 - 20;
 
   bullets.push({ element: bullet, x: startX, y: startY, speed: -5 });
 }
 
-// 弾の更新
 function updateBullets() {
   bullets.forEach((b, index) => {
-    b.x += b.speed; // 横方向だけ移動
+    b.x += b.speed;
     b.element.style.left = b.x + "px";
     b.element.style.top = b.y + "px";
 
-    // 画面外に出たら削除
     if (b.x < -50) {
       b.element.remove();
       bullets.splice(index, 1);
+      return;
     }
 
-    // 当たり判定（プレイヤーと弾）
+    // ==== 当たり判定（ポリゴン同士） ====
     if (!isHit) {
-      const rectBullet = b.element.getBoundingClientRect();
-      const rectPlayer = player.getBoundingClientRect();
-      if (
-        rectBullet.left < rectPlayer.right &&
-        rectBullet.right > rectPlayer.left &&
-        rectBullet.top < rectPlayer.bottom &&
-        rectBullet.bottom > rectPlayer.top
-      ) {
+      const bulletRect = b.element.getBoundingClientRect();
+      const bulletPoly = [
+        {x: bulletRect.left, y: bulletRect.top},
+        {x: bulletRect.right, y: bulletRect.top},
+        {x: bulletRect.right, y: bulletRect.bottom},
+        {x: bulletRect.left, y: bulletRect.bottom}
+      ];
+      const playerPoly = getPolygonFromJSON(player, "free");
+
+      if (polygonsCollide(playerPoly, bulletPoly)) {
         handleHit();
         b.element.remove();
         bullets.splice(index, 1);
@@ -66,19 +149,19 @@ function updateBullets() {
   });
 }
 
-// プレイヤーが弾に当たったときの処理
+//==============================
+// 被弾処理
+//==============================
 function handleHit() {
   isHit = true;
   result.style.left = player.offsetLeft + "px";
   result.style.top = player.offsetTop + "px";
   result.style.width = player.offsetWidth + "px";
   result.style.height = player.offsetHeight + "px";
-
   result.classList.add("shake");
   result.style.display = "block";
   player.style.display = "none";
 
-  // 1秒後に元に戻す
   setTimeout(() => {
     result.style.display = "none";
     result.classList.remove("shake");
@@ -87,137 +170,93 @@ function handleHit() {
   }, 1000);
 }
 
-// キーボード入力
+//==============================
+// 入力処理
+//==============================
 document.addEventListener("keydown", (e) => {
-  // 弾発射は常に有効
-  if (e.key === "Shift") {
-    shootBullet();
-  }
-
-  // プレイヤー操作禁止中は移動・背景スクロールを無効
+  if (e.key === "Shift") shootBullet();
   if (isHit) return;
 
-  // 上下移動・背景スクロール
   if (e.key === "ArrowUp") playerY -= 10;
   if (e.key === "ArrowDown") playerY += 10;
   if (e.key === "ArrowLeft") bgX += 10;
   if (e.key === "ArrowRight") bgX -= 10;
-  gameArea.style.backgroundPosition = bgX + "px 0px";
 
-
-  // 上下移動制限
   playerY = Math.max(0, Math.min(window.innerHeight - player.offsetHeight, playerY));
-
-  // 反映
   player.style.top = playerY + "px";
   gameArea.style.backgroundPosition = bgX + "px 0px";
 });
 
-
-// マウスの動きに合わせてプレイヤーを移動
-document.addEventListener("mousemove", (e) => {
-  if (isHit) return; // 被弾中は操作不可
-
-  // プレイヤーの位置をカーソルに合わせる
-  playerY = e.clientY - player.offsetHeight / 2;
-  
-  // 画面内に制限
-  playerY = Math.max(0, Math.min(window.innerHeight - player.offsetHeight, playerY));
-  
-  player.style.top = playerY + "px";
-});
-
-
-//プレイヤーをカーソル移動
-// マウスの動きに合わせてプレイヤーを移動
+//==============================
+// マウス操作
+//==============================
 let cursorX = window.innerWidth / 2;
 let cursorY = window.innerHeight / 2;
-
-// マウス位置を記録
 document.addEventListener("mousemove", (e) => {
   cursorX = e.clientX;
   cursorY = e.clientY;
 });
 
+//==============================
 // メインループ
+//==============================
 setInterval(() => {
-  if (!gameStarted) return; // カウントダウン中は動かない
-
+  if (!gameStarted) return;
   moveEnemy();
   updateBullets();
 
   if (!isHit) {
-    // プレイヤー操作処理
     const playerCenterX = playerX + player.offsetWidth / 2;
     const playerCenterY = playerY + player.offsetHeight / 2;
 
-    // 上下移動（±5pxの停止範囲あり）
     if (cursorY < playerCenterY - 5) playerY -= 5;
     if (cursorY > playerCenterY + 5) playerY += 5;
-
-    // 可動域制御
-    const minY = 0;
-    const maxY = window.innerHeight - player.offsetHeight;
-    playerY = Math.max(minY, Math.min(maxY, playerY));
+    playerY = Math.max(0, Math.min(window.innerHeight - player.offsetHeight, playerY));
     player.style.top = playerY + "px";
 
-    // 左右スクロール（±10px停止判定）
-    if (cursorX > playerCenterX + 10) {
-      bgX -= 5;
-    } else if (cursorX < playerCenterX - 10) {
-      bgX += 5;
-    }
+    if (cursorX > playerCenterX + 10) bgX -= 5;
+    else if (cursorX < playerCenterX - 10) bgX += 5;
     gameArea.style.backgroundPosition = bgX + "px 0px";
   }
 }, 20);
 
-let gameStarted = false;
-
+//==============================
+// カウントダウンとゲーム開始
+//==============================
 function startCountdown() {
   const countdownEl = document.getElementById("countdown");
   let count = 3;
-
   countdownEl.innerText = count;
   let timer = setInterval(() => {
     count--;
-    if (count > 0) {
-      countdownEl.innerText = count;
-    } else if (count === 0) {
-      countdownEl.innerText = "START!";
-    } else {
+    if (count > 0) countdownEl.innerText = count;
+    else if (count === 0) countdownEl.innerText = "START!";
+    else {
       clearInterval(timer);
       countdownEl.style.display = "none";
-      gameStarted = true; // ゲーム開始
+      gameStarted = true;
     }
   }, 1000);
 }
-
-// 最初にカウントダウンを実行
 startCountdown();
 
-// メインループ
-setInterval(() => {
-  moveEnemy();
-  updateBullets();
-}, 20);
-
-
-// タイマー
+//==============================
+// タイマー・ゴール表示
+//==============================
 let timeLeft = 10;
 const timerElement = document.createElement("div");
 timerElement.style.position = "absolute";
 timerElement.style.top = "20px";
 timerElement.style.left = "20px";
-timerElement.style.color = "rgb(255, 0, 0)"; // 赤
+timerElement.style.color = "red";
 timerElement.style.fontSize = "32px";
 timerElement.style.fontFamily = "monospace";
 timerElement.style.zIndex = "9999";
 timerElement.textContent = `残り時間: ${timeLeft}`;
 gameArea.appendChild(timerElement);
 
-// ゴール画像
 const goal = document.createElement("img");
-goal.src = "../image/ゴール.png"; // ← 画像名を合わせてください
+goal.src = "../image/ゴール.png";
 goal.className = "sprite";
 goal.style.display = "none";
 goal.style.left = "50%";
@@ -226,9 +265,8 @@ goal.style.transform = "translate(-50%, -50%)";
 goal.style.zIndex = "9999";
 gameArea.appendChild(goal);
 
-// タイマー処理
 const timerInterval = setInterval(() => {
-  if (isHit) return; // 被弾中はストップ
+  if (isHit) return;
   timeLeft--;
   timerElement.textContent = `残り時間: ${timeLeft}`;
   if (timeLeft <= 0) {
