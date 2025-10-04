@@ -40,7 +40,9 @@ function updateBullets() {
   bullets.forEach((b, index) => {
     b.x += b.speed; // 横方向だけ移動
     b.element.style.left = b.x + "px";
-   // 画面外に出たら削除
+    b.element.style.top = b.y + "px";
+
+    // 画面外に出たら削除
     if (b.x < -50) {
       b.element.remove();
       bullets.splice(index, 1);
@@ -87,12 +89,10 @@ function handleHit() {
 
 // キーボード入力
 document.addEventListener("keydown", (e) => {
-<<<<<<< Updated upstream
   // 弾発射は常に有効
   if (e.key === "Shift") {
     shootBullet();
   }
-
 
   // プレイヤー操作禁止中は移動・背景スクロールを無効
   if (isHit) return;
@@ -103,6 +103,7 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "ArrowLeft") bgX += 10;
   if (e.key === "ArrowRight") bgX -= 10;
   gameArea.style.backgroundPosition = bgX + "px 0px";
+
 
   // 上下移動制限
   playerY = Math.max(0, Math.min(window.innerHeight - player.offsetHeight, playerY));
@@ -125,6 +126,7 @@ document.addEventListener("mousemove", (e) => {
   
   player.style.top = playerY + "px";
 });
+
 
 //プレイヤーをカーソル移動
 // マウスの動きに合わせてプレイヤーを移動
@@ -193,13 +195,44 @@ function startCountdown() {
 // 最初にカウントダウンを実行
 startCountdown();
 
-
-
-
-
-
 // メインループ
 setInterval(() => {
   moveEnemy();
   updateBullets();
 }, 20);
+
+
+// タイマー
+let timeLeft = 10;
+const timerElement = document.createElement("div");
+timerElement.style.position = "absolute";
+timerElement.style.top = "20px";
+timerElement.style.left = "20px";
+timerElement.style.color = "rgb(255, 0, 0)"; // 赤
+timerElement.style.fontSize = "32px";
+timerElement.style.fontFamily = "monospace";
+timerElement.style.zIndex = "9999";
+timerElement.textContent = `残り時間: ${timeLeft}`;
+gameArea.appendChild(timerElement);
+
+// ゴール画像
+const goal = document.createElement("img");
+goal.src = "../image/ゴール.png"; // ← 画像名を合わせてください
+goal.className = "sprite";
+goal.style.display = "none";
+goal.style.left = "50%";
+goal.style.top = "50%";
+goal.style.transform = "translate(-50%, -50%)";
+goal.style.zIndex = "9999";
+gameArea.appendChild(goal);
+
+// タイマー処理
+const timerInterval = setInterval(() => {
+  if (isHit) return; // 被弾中はストップ
+  timeLeft--;
+  timerElement.textContent = `残り時間: ${timeLeft}`;
+  if (timeLeft <= 0) {
+    clearInterval(timerInterval);
+    goal.style.display = "block";
+  }
+}, 1000);
