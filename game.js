@@ -11,6 +11,8 @@ let enemySpeed = 2;
 let bullets = [];
 let isHit = false;
 let gameStarted = false;
+let recognition;
+let audioContext;
 
 //==============================
 // 当たり判定ポリゴンデータ(JSON)
@@ -227,6 +229,84 @@ function startCountdown() {
   const countdownEl = document.getElementById("countdown");
   let count = 3;
   countdownEl.innerText = count;
+  let timer = setInterval(async() => {
+    count--;
+    if (count > 0) countdownEl.innerText = count;
+    else if (count === 0) countdownEl.innerText = "START!";
+    else {
+      clearInterval(timer);
+      countdownEl.style.display = "none";
+      gameStarted = true;
+
+      //音声認識スタート
+      if (!audioContext) {
+        await setupAudio();
+      }
+      recognition.start();
+      console.log("音声認識スタート");
+    }
+  }, 1000);
+}
+
+//==============================
+// 音声認識の準備（SpeechRecognitionの初期化）
+//==============================
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+if (!SpeechRecognition) {
+  alert("このブラウザは音声認識に対応していません");
+} else {
+  recognition = new SpeechRecognition();
+  recognition.lang = 'ja-JP';
+  recognition.continuous = true;
+  recognition.interimResults = false;
+
+  recognition.onresult = (event) => {
+    const transcript = event.results[event.results.length - 1][0].transcript;
+    console.log("認識結果:", transcript);
+    
+      shootBullet();
+  };
+
+  recognition.onerror = (event) => {
+    console.error("音声認識エラー:", event.error);
+  };
+
+  // 音声認識と音量解析の準備ができたら、ゲーム開始
+  setupAudio().then(() => {
+    console.log("マイクと音声認識の準備完了");
+    startCountdown();
+  });
+}
+
+//==============================
+// 音声入力用マイク設定
+//==============================
+async function setupAudio() {
+  audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  microphone = audioContext.createMediaStreamSource(stream);
+  analyser = audioContext.createAnalyser();
+  analyser.fftSize = 256;
+  microphone.connect(analyser);
+  dataArray = new Uint8Array(analyser.frequencyBinCount);
+}
+
+function getVolume() {
+  analyser.getByteFrequencyData(dataArray);
+  let values = 0;
+  for (let i = 0; i < dataArray.length; i++) {
+    values += dataArray[i];
+  }
+  return values / dataArray.length;
+}
+
+//==============================
+// カウントダウンとゲーム開始
+//==============================
+function startCountdown() {
+  const countdownEl = document.getElementById("countdown");
+  let count = 3;
+  countdownEl.innerText = count;
   let timer = setInterval(() => {
     count--;
     if (count > 0) countdownEl.innerText = count;
@@ -235,10 +315,15 @@ function startCountdown() {
       clearInterval(timer);
       countdownEl.style.display = "none";
       gameStarted = true;
+
+      // 🎤 音声認識スタート
+      recognition.start();
+      console.log("音声認識スタート");
     }
   }, 1000);
 }
-startCountdown();
+
+
 
 //==============================
 // タイマー・ゴール表示
