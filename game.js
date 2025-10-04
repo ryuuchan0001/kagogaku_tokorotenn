@@ -21,34 +21,41 @@ function moveEnemy() {
 }
 
 // 弾発射
-// 弾発射
 function shootBullet() {
   const bullet = document.createElement("img");
   bullet.src = "../image/しばる.png";
   bullet.className = "bullet";
   gameArea.appendChild(bullet);
 
-  // 敵の画面上の位置から発射
-  const startX = enemy.offsetLeft; 
-  const startY = enemyY + enemy.offsetHeight / 2 - 20;
+  // 背景基準で位置を記録
+  const startWorldX = -bgX + enemy.offsetLeft;
+  const startWorldY = enemyY + enemy.offsetHeight / 2 - 20;
 
-  bullets.push({ element: bullet, x: startX, y: startY, speed: -5 });
+  bullets.push({
+    element: bullet,
+    worldX: startWorldX,
+    worldY: startWorldY,
+    speed: -5
+  });
 }
 
 // 弾の更新
 function updateBullets() {
   bullets.forEach((b, index) => {
-    b.x += b.speed; // 横方向だけ移動
-    b.element.style.left = b.x + "px";
-    b.element.style.top = b.y + "px";
+    b.worldX += b.speed; // 背景基準で移動
+
+    // 背景スクロールに合わせて表示位置を変換
+    b.element.style.left = (b.worldX + bgX) + "px";
+    b.element.style.top = b.worldY + "px";
 
     // 画面外に出たら削除
-    if (b.x < -50) {
+    if (b.worldX + bgX < -50) {
       b.element.remove();
       bullets.splice(index, 1);
+      return;
     }
 
-    // 当たり判定（プレイヤーと弾）
+    // 当たり判定（プレイヤー）
     if (!isHit) {
       const rectBullet = b.element.getBoundingClientRect();
       const rectPlayer = player.getBoundingClientRect();
@@ -65,6 +72,7 @@ function updateBullets() {
     }
   });
 }
+
 
 // プレイヤーが弾に当たったときの処理
 function handleHit() {
@@ -113,8 +121,7 @@ document.addEventListener("keydown", (e) => {
   gameArea.style.backgroundPosition = bgX + "px 0px";
 });
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
+
 // マウスの動きに合わせてプレイヤーを移動
 document.addEventListener("mousemove", (e) => {
   if (isHit) return; // 被弾中は操作不可
@@ -128,9 +135,7 @@ document.addEventListener("mousemove", (e) => {
   player.style.top = playerY + "px";
 });
 
-=======
-=======
->>>>>>> Stashed changes
+
 //プレイヤーをカーソル移動
 // マウスの動きに合わせてプレイヤーを移動
 let cursorX = window.innerWidth / 2;
@@ -165,9 +170,9 @@ setInterval(() => {
     player.style.top = playerY + "px";
 
     // 左右スクロール（±10px停止判定）
-    if (cursorX > playerCenterX + 10) {
+    if (cursorX > playerCenterX + 30) {
       bgX -= 5;
-    } else if (cursorX < playerCenterX - 10) {
+    } else if (cursorX < playerCenterX - 30) {
       bgX += 5;
     }
     gameArea.style.backgroundPosition = bgX + "px 0px";
@@ -201,10 +206,7 @@ startCountdown();
 
 
 
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
+
 
 // メインループ
 setInterval(() => {
