@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>音声認識＋音量でオブジェクト生成</title>
+<!--css-->
+  <style>
+    #gameCanvas {
+      border: 1px solid black;
+      background: #eee;
+      display: block;
+      margin: 20px auto;
+    }
+    #startBtn {
+      display: block;
+      margin: 10px auto;
+      padding: 10px 20px;
+      font-size: 18px;
+    }
+  </style>
+</head>
+<body>
+<!--UI-->
+  <button id="startBtn">音声認識スタート</button>
+  <canvas id="gameCanvas" width="600" height="400"></canvas>
+
+  <script>
+    //DOM操作準備
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const startBtn = document.getElementById('startBtn');
+
+    let objects = [];
+    //音声認識の準備
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      alert("このブラウザは音声認識に対応していません");
+    } else {
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'ja-JP';
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      let audioContext;
+      let analyser;
+      let microphone;
+      let dataArray;
+    //音量の準備
+      async function setupAudio() {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        microphone = audioContext.createMediaStreamSource(stream);
+        analyser = audioContext.createAnalyser();
+        analyser.fftSize = 256;
+        microphone.connect(analyser);
+        dataArray = new Uint8Array(analyser.frequencyBinCount);
+      }
+    //音量の取得
+      function getVolume() {
+        analyser.getByteFrequencyData(dataArray);
+        let values = 0;
+        for (let i = 0; i < dataArray.length; i++) {
+          values += dataArray[i];
+        }
+        return values / dataArray.length;
+      }
+
+      startBtn.onclick = async () => {
+        if (!audioContext) {
+          await setupAudio();
+        }
+        recognition.start();
+        console.log("音声認識スタート");
+      };
+      //音声認識後オブジェクト生成
+      recognition.onresult = (event) => {
+        //入力した音声の内容を保存している配列
+        const transcript = event.results[0][0].transcript;
+        console.log("認識結果:", transcript);
+        //ここの日本語をいじれば音声認識の内容を変えられる
+        if (transcript.includes("さかな")) {
+          const volume = getVolume();
+          console.log("音量:", volume);
+
+          let size = 30;
+          let color = 'blue';
+
+          if (volume > 100) {
+            size = 80;
+            color = 'red';
+          } else if (volume > 50) {
+            size = 50;
+            color = 'green';
+          }
+
+          spawnObject(size, color);
+        }
+      };
+
+      recognition.onerror = (event) => {
+        console.error("音声認識エラー:", event.error);
+      };
+    }
+
+    function spawnObject(size, color) {
+      const obj = {
+        x: Math.random() * (canvas.width - size),
+        y: Math.random() * (canvas.height - size),
+        width: size,
+        height: size,
+        color: color
+      };
+      objects.push(obj);
+      draw();
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (const obj of objects) {
+        ctx.fillStyle = obj.color;
+        ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
+      }
+    }
+  </script>
+</body>
+</html>
