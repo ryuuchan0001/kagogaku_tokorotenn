@@ -113,8 +113,7 @@ document.addEventListener("keydown", (e) => {
   gameArea.style.backgroundPosition = bgX + "px 0px";
 });
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
+
 // マウスの動きに合わせてプレイヤーを移動
 document.addEventListener("mousemove", (e) => {
   if (isHit) return; // 被弾中は操作不可
@@ -128,9 +127,7 @@ document.addEventListener("mousemove", (e) => {
   player.style.top = playerY + "px";
 });
 
-=======
-=======
->>>>>>> Stashed changes
+
 //プレイヤーをカーソル移動
 // マウスの動きに合わせてプレイヤーを移動
 let cursorX = window.innerWidth / 2;
@@ -198,16 +195,44 @@ function startCountdown() {
 // 最初にカウントダウンを実行
 startCountdown();
 
-
-
-
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-
 // メインループ
 setInterval(() => {
   moveEnemy();
   updateBullets();
 }, 20);
+
+
+// タイマー
+let timeLeft = 10;
+const timerElement = document.createElement("div");
+timerElement.style.position = "absolute";
+timerElement.style.top = "20px";
+timerElement.style.left = "20px";
+timerElement.style.color = "rgb(255, 0, 0)"; // 赤
+timerElement.style.fontSize = "32px";
+timerElement.style.fontFamily = "monospace";
+timerElement.style.zIndex = "9999";
+timerElement.textContent = `残り時間: ${timeLeft}`;
+gameArea.appendChild(timerElement);
+
+// ゴール画像
+const goal = document.createElement("img");
+goal.src = "../image/ゴール.png"; // ← 画像名を合わせてください
+goal.className = "sprite";
+goal.style.display = "none";
+goal.style.left = "50%";
+goal.style.top = "50%";
+goal.style.transform = "translate(-50%, -50%)";
+goal.style.zIndex = "9999";
+gameArea.appendChild(goal);
+
+// タイマー処理
+const timerInterval = setInterval(() => {
+  if (isHit) return; // 被弾中はストップ
+  timeLeft--;
+  timerElement.textContent = `残り時間: ${timeLeft}`;
+  if (timeLeft <= 0) {
+    clearInterval(timerInterval);
+    goal.style.display = "block";
+  }
+}, 1000);
