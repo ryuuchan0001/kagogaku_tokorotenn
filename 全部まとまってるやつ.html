@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>Webゲーム - 震える画像C</title>
+<style>
+  body { margin: 0; overflow: hidden; }
+  #gameArea {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    background: url("image/背景.png") repeat;
+    background-size: auto;
+    overflow: hidden;
+  }
+  .sprite {
+    position: absolute;
+    width: 100px;
+    height: 100px;
+  }
+  #player {
+    left: 100px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+  #enemy {
+    right: 100px;
+    top: 100px;
+  }
+  #result {
+    display: none;
+    position: absolute;
+  }
+  .bullet {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    pointer-events: none;
+  }
+
+  /* 震えるアニメーション */
+  @keyframes shake {
+    0% { transform: translateY(-50%) translateX(0px); }
+    25% { transform: translateY(-50%) translateX(-5px); }
+    50% { transform: translateY(-50%) translateX(5px); }
+    75% { transform: translateY(-50%) translateX(-5px); }
+    100% { transform: translateY(-50%) translateX(0px); }
+  }
+  .shake {
+    animation: shake 0.1s infinite;
+  }
+</style>
+</head>
+<body>
+<div id="gameArea">
+  <img id="player" class="sprite" src="image/自由.png" alt="A">
+  <img id="enemy" class="sprite" src="image/しばる.png" alt="B">
+  <img id="result" class="sprite" src="image/自由をしばるる.png" alt="C">
+</div>
+
+<script>
+const gameArea = document.getElementById("gameArea");
+const player = document.getElementById("player");
+const enemy = document.getElementById("enemy");
+const result = document.getElementById("result");
+
+let bgX = 0;
+const playerX = 100;
+let playerY = window.innerHeight / 2 - 50;
+let enemyY = 100;
+let enemySpeed = 2;
+let bullets = [];
+let isHit = false;
+
+// 敵の上下移動
+function moveEnemy() {
+  enemyY += enemySpeed;
+  if (enemyY <= 0 || enemyY >= window.innerHeight - 100) {
+    enemySpeed *= -1;
+  }
+  enemy.style.top = enemyY + "px";
+}
+
+// Shiftキーで弾を発射
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Shift") {
+        shootBullet();
+      }
+    });
+
+// 弾発射
+function shootBullet() {
+  const bullet = document.createElement("img");
+  bullet.src = "image/しばる.png";
+  bullet.className = "bullet";
+  gameArea.appendChild(bullet);
+  bullets.push({ element: bullet, x: enemy.offsetLeft, y: enemyY, speed: -5 });
+}
+
+// 弾の更新
+function updateBullets() {
+  bullets.forEach((b, index) => {
+    b.x += b.speed;
+    b.element.style.left = b.x + "px";
+    b.element.style.top = b.y + "px";
+
+    if (b.x < -50) {
+      b.element.remove();
+      bullets.splice(index, 1);
+    }
+
+    if (!isHit) {
+      const rectBullet = b.element.getBoundingClientRect();
+      const rectPlayer = player.getBoundingClientRect();
+      if (
+        rectBullet.left < rectPlayer.right &&
+        rectBullet.right > rectPlayer.left &&
+        rectBullet.top < rectPlayer.bottom &&
+        rectBullet.bottom > rectPlayer.top
+      ) {
+        handleHit();
+        b.element.remove();
+        bullets.splice(index, 1);
+      }
+    }
+  });
+}
+
+// 当たり処理
+function handleHit() {
+  isHit = true;
+  // 表示位置・サイズ合わせ
+  result.style.left = player.offsetLeft + "px";
+  result.style.top = player.offsetTop + "px";
+  result.style.width = player.offsetWidth + "px";
+  result.style.height = player.offsetHeight + "px";
+
+  result.classList.add("shake"); // 震えアニメ追加
+  result.style.display = "block";
+  player.style.display = "none";
+
+  // 1秒後に元に戻す
+  setTimeout(() => {
+    result.style.display = "none";
+    result.classList.remove("shake");
+    player.style.display = "block";
+    isHit = false;
+  }, 1000);
+}
+
+// キーボード入力
+document.addEventListener("keydown", (e) => {
+  if (isHit) return; // 弾中は操作不可
+
+  if (e.key === "ArrowUp") playerY -= 10;
+  if (e.key === "ArrowDown") playerY += 10;
+  if (e.key === "ArrowLeft") bgX += 10;
+  if (e.key === "ArrowRight") bgX -= 10;
+
+  // 上下移動制限
+  playerY = Math.max(0, Math.min(window.innerHeight - player.offsetHeight, playerY));
+
+  player.style.top = playerY + "px";
+  gameArea.style.backgroundPosition = bgX + "px 0px";
+});
+
+// メインループ
+setInterval(() => {
+  moveEnemy();
+  updateBullets();
+}, 20);
+</script>
+</body>
+</html>
