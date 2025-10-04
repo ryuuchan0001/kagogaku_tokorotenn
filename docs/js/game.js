@@ -111,19 +111,29 @@ function shootBullet() {
   bullet.className = "bullet";
   gameArea.appendChild(bullet);
 
-  const startX = enemy.offsetLeft;
-  const startY = enemyY + enemy.offsetHeight / 2 - 20;
+  // 背景基準で位置を記録
+  const startWorldX = -bgX + enemy.offsetLeft;
+  const startWorldY = enemyY + enemy.offsetHeight / 2 - 20;
 
-  bullets.push({ element: bullet, x: startX, y: startY, speed: -5 });
+  bullets.push({
+    element: bullet,
+    worldX: startWorldX,
+    worldY: startWorldY,
+    speed: -15
+  });
 }
 
+// 弾の更新
 function updateBullets() {
   bullets.forEach((b, index) => {
-    b.x += b.speed;
-    b.element.style.left = b.x + "px";
-    b.element.style.top = b.y + "px";
+    b.worldX += b.speed; // 背景基準で移動
 
-    if (b.x < -50) {
+    // 背景スクロールに合わせて表示位置を変換
+    b.element.style.left = (b.worldX + bgX) + "px";
+    b.element.style.top = b.worldY + "px";
+
+    // 画面外に出たら削除
+    if (b.worldX + bgX < -50) {
       b.element.remove();
       bullets.splice(index, 1);
       return;
