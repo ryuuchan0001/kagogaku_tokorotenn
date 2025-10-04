@@ -223,71 +223,54 @@ setInterval(() => {
 //==============================
 // カウントダウンとゲーム開始
 //==============================
-// --- スタートカウント（3秒） ---
-let startCount = 3;
-const startTimer = document.createElement("div");
-startTimer.style.position = "absolute";
-startTimer.style.top = "50%";
-startTimer.style.left = "50%";
-startTimer.style.transform = "translate(-50%, -50%)";
-startTimer.style.color = "yellow";
-startTimer.style.fontSize = "80px";
-startTimer.style.fontFamily = "monospace";
-startTimer.style.zIndex = "9999";
-startTimer.textContent = startCount;
-gameArea.appendChild(startTimer);
-
-// スタートカウントダウン処理
-const startInterval = setInterval(() => {
-  startCount--;
-  if (startCount > 0) {
-    startTimer.textContent = startCount;
-  } else if (startCount === 0) {
-    startTimer.textContent = "スタート！";
-  } else {
-    clearInterval(startInterval);
-    startTimer.remove(); // スタート表示を消す
-    startMainTimer();    // 残り時間タイマーを開始！
-  }
-}, 1000);
-
+function startCountdown() {
+  const countdownEl = document.getElementById("countdown");
+  let count = 3;
+  countdownEl.innerText = count;
+  let timer = setInterval(() => {
+    count--;
+    if (count > 0) countdownEl.innerText = count;
+    else if (count === 0) countdownEl.innerText = "START!";
+    else {
+      clearInterval(timer);
+      countdownEl.style.display = "none";
+      gameStarted = true;
+    }
+  }, 1000);
+}
+startCountdown();
 
 //==============================
 // タイマー・ゴール表示
 //==============================
-// --- 残り時間タイマー（10秒） ---
-function startMainTimer() {
-  let timeLeft = 10;
-  const timerElement = document.createElement("div");
-  timerElement.style.position = "absolute";
-  timerElement.style.top = "20px";
-  timerElement.style.left = "20px";
-  timerElement.style.color = "white";
-  timerElement.style.fontSize = "32px";
-  timerElement.style.fontFamily = "monospace";
-  timerElement.style.zIndex = "9999";
+let timeLeft = 10;
+const timerElement = document.createElement("div");
+timerElement.style.position = "absolute";
+timerElement.style.top = "20px";
+timerElement.style.left = "20px";
+timerElement.style.color = "red";
+timerElement.style.fontSize = "32px";
+timerElement.style.fontFamily = "monospace";
+timerElement.style.zIndex = "9999";
+timerElement.textContent = `残り時間: ${timeLeft}`;
+gameArea.appendChild(timerElement);
+
+const goal = document.createElement("img");
+goal.src = "../image/ゴール.png";
+goal.className = "sprite";
+goal.style.display = "none";
+goal.style.left = "50%";
+goal.style.top = "50%";
+goal.style.transform = "translate(-50%, -50%)";
+goal.style.zIndex = "9999";
+gameArea.appendChild(goal);
+
+const timerInterval = setInterval(() => {
+  if (isHit) return;
+  timeLeft--;
   timerElement.textContent = `残り時間: ${timeLeft}`;
-  gameArea.appendChild(timerElement);
-
-  // ゴール画像
-  const goal = document.createElement("img");
-  goal.src = "../image/ゴール.png";
-  goal.className = "sprite";
-  goal.style.display = "none";
-  goal.style.left = "50%";
-  goal.style.top = "50%";
-  goal.style.transform = "translate(-50%, -50%)";
-  goal.style.zIndex = "9999";
-  gameArea.appendChild(goal);
-
-  // タイマー処理
-  const timerInterval = setInterval(() => {
-    if (isHit) return; // 被弾中はストップ
-    timeLeft--;
-    timerElement.textContent = `残り時間: ${timeLeft}`;
-    if (timeLeft <= 0) {
-      clearInterval(timerInterval);
-      goal.style.display = "block"; // ゴール表示
-    }
-  }, 1000);
-}
+  if (timeLeft <= 0) {
+    clearInterval(timerInterval);
+    goal.style.display = "block";
+  }
+}, 1000);
