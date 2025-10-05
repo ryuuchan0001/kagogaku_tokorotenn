@@ -11,6 +11,8 @@ let enemySpeed = 2;
 let bullets = [];
 let isHit = false;
 let gameStarted = false;
+let recognition;
+let audioContext;
 
 //==============================
 // 当たり判定ポリゴンデータ(JSON)
@@ -60,6 +62,10 @@ const hitboxData = {
 function getPolygonFromJSON(element, type) {
   const json = hitboxData[type];
   const rect = element.getBoundingClientRect();
+<<<<<<< HEAD
+=======
+
+>>>>>>> audio
   return json.map(p => ({
     x: rect.left + p.nx * rect.width,
     y: rect.top + p.ny * rect.height
@@ -78,13 +84,24 @@ function polygonsCollide(polyA, polyB) {
       const edgeX = polygon[k].x - polygon[j].x;
       const edgeY = polygon[k].y - polygon[j].y;
       const normal = { x: -edgeY, y: edgeX };
+<<<<<<< HEAD
       let [minA, maxA] = projectPolygon(polyA, normal);
       let [minB, maxB] = projectPolygon(polyB, normal);
+=======
+
+      let [minA, maxA] = projectPolygon(polyA, normal);
+      let [minB, maxB] = projectPolygon(polyB, normal);
+
+>>>>>>> audio
       if (maxA < minB || maxB < minA) return false;
     }
   }
   return true;
 }
+<<<<<<< HEAD
+=======
+
+>>>>>>> audio
 function projectPolygon(polygon, axis) {
   const dots = polygon.map(p => (p.x * axis.x + p.y * axis.y));
   return [Math.min(...dots), Math.max(...dots)];
@@ -95,12 +112,19 @@ function projectPolygon(polygon, axis) {
 //==============================
 function moveEnemy() {
   enemyY += enemySpeed;
+<<<<<<< HEAD
   if (enemyY <= 0 || enemyY >= window.innerHeight - 100) enemySpeed *= -1;
+=======
+  if (enemyY <= 0 || enemyY >= window.innerHeight - 100) {
+    enemySpeed *= -1;
+  }
+>>>>>>> audio
   enemy.style.top = enemyY + "px";
 }
 
 function shootBullet() {
   const bullet = document.createElement("img");
+<<<<<<< HEAD
   bullet.src = "../image/bind.png";
   bullet.className = "bullet";
   gameArea.appendChild(bullet);
@@ -114,20 +138,42 @@ function shootBullet() {
     worldY: startWorldY,
     speed: -15
   });
+=======
+  bullet.src = "../image/しばる.png";
+  bullet.className = "bullet";
+  gameArea.appendChild(bullet);
+
+  const startX = enemy.offsetLeft;
+  const startY = enemyY + enemy.offsetHeight / 2 - 20;
+
+  bullets.push({ element: bullet, x: startX, y: startY, speed: -5 });
+>>>>>>> audio
 }
 
 function updateBullets() {
   bullets.forEach((b, index) => {
+<<<<<<< HEAD
     b.worldX += b.speed;
     b.element.style.left = (b.worldX + bgX) + "px";
     b.element.style.top = b.worldY + "px";
 
     if (b.worldX + bgX < -50) {
+=======
+    b.x += b.speed;
+    b.element.style.left = b.x + "px";
+    b.element.style.top = b.y + "px";
+
+    if (b.x < -50) {
+>>>>>>> audio
       b.element.remove();
       bullets.splice(index, 1);
       return;
     }
 
+<<<<<<< HEAD
+=======
+    // ==== 当たり判定（ポリゴン同士） ====
+>>>>>>> audio
     if (!isHit) {
       const bulletRect = b.element.getBoundingClientRect();
       const bulletPoly = [
@@ -137,6 +183,10 @@ function updateBullets() {
         {x: bulletRect.left, y: bulletRect.bottom}
       ];
       const playerPoly = getPolygonFromJSON(player, "free");
+<<<<<<< HEAD
+=======
+
+>>>>>>> audio
       if (polygonsCollide(playerPoly, bulletPoly)) {
         handleHit();
         b.element.remove();
@@ -218,11 +268,126 @@ setInterval(() => {
 }, 20);
 
 //==============================
+<<<<<<< HEAD
+<<<<<<<< HEAD:docs/js/game.js
 // カウントダウンと残り時間タイマー
+========
+=======
+>>>>>>> audio
+// カウントダウンとゲーム開始
+//==============================
+function startCountdown() {
+  const countdownEl = document.getElementById("countdown");
+  let count = 3;
+  countdownEl.innerText = count;
+  let timer = setInterval(async() => {
+    count--;
+    if (count > 0) countdownEl.innerText = count;
+    else if (count === 0) countdownEl.innerText = "START!";
+    else {
+      clearInterval(timer);
+      countdownEl.style.display = "none";
+      gameStarted = true;
+
+      //音声認識スタート
+      if (!audioContext) {
+        await setupAudio();
+      }
+      recognition.start();
+      console.log("音声認識スタート");
+    }
+  }, 1000);
+}
+
+//==============================
+// 音声認識の準備（SpeechRecognitionの初期化）
+//==============================
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+if (!SpeechRecognition) {
+  alert("このブラウザは音声認識に対応していません");
+} else {
+  recognition = new SpeechRecognition();
+  recognition.lang = 'ja-JP';
+  recognition.continuous = true;
+  recognition.interimResults = false;
+
+  recognition.onresult = (event) => {
+    const transcript = event.results[event.results.length - 1][0].transcript;
+    console.log("認識結果:", transcript);
+    
+      shootBullet();
+  };
+
+  recognition.onerror = (event) => {
+    console.error("音声認識エラー:", event.error);
+  };
+
+  // 音声認識と音量解析の準備ができたら、ゲーム開始
+  setupAudio().then(() => {
+    console.log("マイクと音声認識の準備完了");
+    startCountdown();
+  });
+}
+
+//==============================
+// 音声入力用マイク設定
+//==============================
+async function setupAudio() {
+  audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  microphone = audioContext.createMediaStreamSource(stream);
+  analyser = audioContext.createAnalyser();
+  analyser.fftSize = 256;
+  microphone.connect(analyser);
+  dataArray = new Uint8Array(analyser.frequencyBinCount);
+}
+
+function getVolume() {
+  analyser.getByteFrequencyData(dataArray);
+  let values = 0;
+  for (let i = 0; i < dataArray.length; i++) {
+    values += dataArray[i];
+  }
+  return values / dataArray.length;
+}
+
+//==============================
+// カウントダウンとゲーム開始
+//==============================
+function startCountdown() {
+  const countdownEl = document.getElementById("countdown");
+  let count = 3;
+  countdownEl.innerText = count;
+  let timer = setInterval(() => {
+    count--;
+    if (count > 0) countdownEl.innerText = count;
+    else if (count === 0) countdownEl.innerText = "START!";
+    else {
+      clearInterval(timer);
+      countdownEl.style.display = "none";
+      gameStarted = true;
+
+      // 🎤 音声認識スタート
+      recognition.start();
+      console.log("音声認識スタート");
+    }
+  }, 1000);
+}
+
+
+
+//==============================
+// タイマー・ゴール表示
+<<<<<<< HEAD
+>>>>>>>> audio:game.js
 //==============================
 let timeLeft = 10;
 
 // タイマー表示（最初から表示）
+=======
+//==============================
+let timeLeft = 10;
+>>>>>>> audio
 const timerElement = document.createElement("div");
 timerElement.style.position = "absolute";
 timerElement.style.top = "20px";
@@ -234,7 +399,10 @@ timerElement.style.zIndex = "9999";
 timerElement.textContent = `残り時間: ${timeLeft}`;
 gameArea.appendChild(timerElement);
 
+<<<<<<< HEAD
 // ゴール表示
+=======
+>>>>>>> audio
 const goal = document.createElement("img");
 goal.src = "../image/ゴール.png";
 goal.className = "sprite";
@@ -245,6 +413,7 @@ goal.style.transform = "translate(-50%, -50%)";
 goal.style.zIndex = "9999";
 gameArea.appendChild(goal);
 
+<<<<<<< HEAD
 // スタートカウント表示
 let startCount = 3;
 const startTimer = document.createElement("div");
@@ -284,3 +453,14 @@ function startMainTimer() {
     }
   }, 1000);
 }
+=======
+const timerInterval = setInterval(() => {
+  if (isHit) return;
+  timeLeft--;
+  timerElement.textContent = `残り時間: ${timeLeft}`;
+  if (timeLeft <= 0) {
+    clearInterval(timerInterval);
+    goal.style.display = "block";
+  }
+}, 1000);
+>>>>>>> audio
