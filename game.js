@@ -360,7 +360,8 @@ goal.style.top = "50%";
 goal.style.transform = "translate(-50%, -50%)";
 goal.style.zIndex = "9999";
 gameArea.appendChild(goal);
-
+goal.style.height = window.innerHeight + "px"; // 画面の高さに合わせる
+goal.style.width = "auto"; // 比率を保つ
 // スタートカウント表示
 let startCount = 3;
 const startTimer = document.createElement("div");
