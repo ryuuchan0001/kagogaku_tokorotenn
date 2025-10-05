@@ -274,7 +274,9 @@ if (!SpeechRecognition) {
     const transcript = event.results[event.results.length - 1][0].transcript;
     const isFinal = event.results[event.results.length -1].isFinal;
     console.log("認識結果:", transcript,"(final:",isFinal,")");
+        if (transcript.includes("は")) {
       shootBullet();
+    }  
   };
 
   recognition.onstart = () => {
