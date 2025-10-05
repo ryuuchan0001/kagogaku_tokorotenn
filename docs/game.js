@@ -205,6 +205,62 @@ document.addEventListener("mousemove", (e) => {
 });
 
 //==============================
+// ゴール設定
+//==============================
+
+const goal = document.createElement("img");
+goal.src = "../image/goal.png";
+goal.className = "sprite";
+goal.style.display = "none";
+goal.style.position = "absolute";
+goal.style.top = "50%";
+goal.style.left = "90%";
+goal.style.transform = "translateY(-50%)";
+goal.style.zIndex = "1";
+goal.style.opacity = "1";
+gameArea.appendChild(goal);
+
+function updateGoalPosition() {
+  goal.style.left = `${window.innerWidth - 200 + bgX}px`; 
+}
+
+//==============================
+// クリア・勝利メッセージ
+//==============================
+const clearMessage = document.createElement("div");
+clearMessage.style.position = "absolute";
+clearMessage.style.top = "50%";
+clearMessage.style.left = "50%";
+clearMessage.style.transform = "translate(-50%, -50%)";
+clearMessage.style.fontSize = "64px";
+clearMessage.style.color = "yellow";
+clearMessage.style.fontFamily = "monospace";
+clearMessage.style.display = "none";
+clearMessage.style.zIndex = "9999";
+clearMessage.textContent = "🎉 勝利！！ 🎉";
+gameArea.appendChild(clearMessage);
+
+//==============================
+// スクロール距離表示
+//==============================
+const scrollDisplay = document.createElement("div");
+scrollDisplay.style.position = "absolute";
+scrollDisplay.style.top = "20px";
+scrollDisplay.style.right = "20px";
+scrollDisplay.style.fontSize = "24px";
+scrollDisplay.style.fontFamily = "monospace";
+scrollDisplay.style.color = "red";
+scrollDisplay.style.zIndex = "9999";
+scrollDisplay.textContent = "距離: 0 / 1000"; // 初期表示
+gameArea.appendChild(scrollDisplay);
+
+// ゴールまでの距離(px換算)
+const goalDistance = 1000; 
+
+let scrollCount = 0;
+let prevBgX = bgX; // 前フレームのbgX
+
+//============================== 
 // メインループ
 //==============================
 setInterval(() => {
