@@ -13,6 +13,7 @@ let isHit = false;
 let gameStarted = false;
 let recognition;
 let audioContext;
+let isRecognizing = false;
 
 //==============================
 // 当たり判定ポリゴンデータ(JSON)
@@ -225,10 +226,7 @@ setInterval(() => {
     else if (cursorX < playerCenterX - 10) bgX += 5;
     gameArea.style.backgroundPosition = bgX + "px 0px";
   }
-  recognition.onend = () => {
-    console.warn("音声認識ストップ（自動再起動）");
-    if (gameStarted) recognition.start();
-  };
+  
 }, 20);
 
 //==============================
@@ -253,8 +251,10 @@ function startCountdown() {
       if (!audioContext) {
         await setupAudio();
       }
-      recognition.start();
-      console.log("音声認識スタート");
+      if(!isRecognizing){
+        recognition.start();
+        console.log("音声認識スタート");
+      }
     }
   }, 1000);
 }
@@ -269,25 +269,45 @@ if (!SpeechRecognition) {
   recognition = new SpeechRecognition();
   recognition.lang = 'ja-JP';
   recognition.continuous = true;
-  recognition.interimResults = false;
+  recognition.interimResults = true;
 
   recognition.onresult = (event) => {
     const transcript = event.results[event.results.length - 1][0].transcript;
-    const isFinal = event.results[event.results.legth -1].isFinal;
+    const isFinal = event.results[event.results.length -1].isFinal;
     console.log("認識結果:", transcript,"(final:",isFinal,")");
-    
       shootBullet();
+  };
+
+  recognition.onstart = () => {
+    isRecognizing = true;
+    console.log("音声認識開始");
   };
 
   recognition.onerror = (event) => {
     console.error("音声認識エラー:", event.error);
   };
+  recognition.onend = () => {
+    console.warn("音声認識ストップ（自動再起動）");
+    isRecognizing = false;
+    if (gameStarted) {
+      // 少し遅らせて再スタート（クラッシュ防止）
+      setTimeout(() => {
+      try {
+        recognition.start();
+        console.log("音声認識再スタート");
+      } catch (e) {
+        console.error("音声認識再スタート失敗:", e);
+      }
+    }, 500);  
 
-  // 音声認識と音量解析の準備ができたら、ゲーム開始
+ 
+    }
+  };
+    // 音声認識と音量解析の準備ができたら、ゲーム開始
   setupAudio().then(() => {
     console.log("マイクと音声認識の準備完了");
-    startCountdown();
-  });
+      startCountdown();
+    });
 }
 
 //==============================
