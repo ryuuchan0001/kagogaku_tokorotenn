@@ -253,7 +253,6 @@ function startCountdown() {
       }
       if(!isRecognizing){
         recognition.start();
-        console.log("音声認識スタート");
       }
     }
   }, 1000);
@@ -279,12 +278,23 @@ if (!SpeechRecognition) {
   };
 
   recognition.onstart = () => {
-    isRecognizing = true;
-    console.log("音声認識開始");
+    if(!isRecognizing){
+      isRecognizing = true;
+      console.log("音声認識開始");
+    }
   };
 
   recognition.onerror = (event) => {
     console.error("音声認識エラー:", event.error);
+    if (event.error === "aborted") {
+      // 一旦止める（start を呼ばない）
+      isRecognizing = false;
+      return;
+    }
+
+    // 他のエラーは再起動させる
+    recognition.stop();
+
   };
   recognition.onend = () => {
     console.warn("音声認識ストップ（自動再起動）");
@@ -292,12 +302,14 @@ if (!SpeechRecognition) {
     if (gameStarted) {
       // 少し遅らせて再スタート（クラッシュ防止）
       setTimeout(() => {
-      try {
-        recognition.start();
-        console.log("音声認識再スタート");
-      } catch (e) {
-        console.error("音声認識再スタート失敗:", e);
-      }
+        if (!isRecognizing) {
+          try {
+            recognition.start();
+            console.log("音声認識再スタート");
+          } catch (e) {
+            console.error("音声認識再スタート失敗:", e);
+          }
+        }
     }, 500);  
 
  
