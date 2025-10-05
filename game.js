@@ -116,6 +116,8 @@ function moveEnemy() {
   enemy.style.top = enemyY + "px";
 }
 
+const shootSound = new Audio("sounds/shot.mp3");
+
 function shootBullet() {
   const bullet = document.createElement("img");
   bullet.src = "image/bind.png";
@@ -124,6 +126,9 @@ function shootBullet() {
 
   const startWorldX = -bgX + enemy.offsetLeft;
   const startWorldY = enemyY + enemy.offsetHeight / 2 - 20;
+
+  shootSound.currentTime = 0; // 連打しても鳴るように巻き戻し
+  shootSound.play();  
 
   bullets.push({
     element: bullet,
