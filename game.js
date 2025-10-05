@@ -195,6 +195,7 @@ setInterval(() => {
   if (!gameStarted) return;
   moveEnemy();
   updateBullets();
+  updateObstacles();
 
   if (!isHit) {
     const playerCenterX = playerX + player.offsetWidth / 2;
@@ -204,14 +205,24 @@ setInterval(() => {
     playerY = Math.max(0, Math.min(window.innerHeight - player.offsetHeight, playerY));
     player.style.top = playerY + "px";
 
-    if (cursorX > playerCenterX + 10) bgX -= 5;
-    else if (cursorX < playerCenterX - 10) bgX += 5;
+    if (cursorX > playerCenterX + 10) moveBackground("left");
+    else if (cursorX < playerCenterX - 10) moveBackground("right");
+
     gameArea.style.backgroundPosition = bgX + "px 0px";
   }
+  if (goalAppeared && !isHit) {
+  const goalRect = goal.getBoundingClientRect();
+  const playerRect = player.getBoundingClientRect();
 
-  recognition.onend = () => {
-    if (gameStarted) recognition.start();
-  };
+  if (
+    distanceMoved >= 2200
+  ) {
+    gameStarted = false;
+    goal.style.animation = "pulse 1s infinite";
+    alert("🎉 ゴール！クリアおめでとう！");
+  }
+}
+
 }, 20);
 
 //==============================
@@ -349,4 +360,140 @@ function startMainTimer() {
     }
 
   }, 1000);
+}
+
+// ==============================
+// ゴール出現と背景連動
+// ==============================
+let distanceMoved = 0;     // プレイヤーが進んだ距離
+let goalAppeared = false;  // ゴール出現フラグ
+let goalX = window.innerWidth + 200; // 初期ゴール位置（画面外）
+let goalY = window.innerHeight / 2 - 100;
+
+// 背景移動関数（カーソル移動時に呼び出す）
+function moveBackground(direction) {
+  if (direction === "left") {
+    bgX -= 5;
+    distanceMoved += 5; // 進んだ距離を加算
+  } else if (direction === "right") {
+    bgX += 5;
+    distanceMoved = Math.max(0, distanceMoved - 5); // 後退時に減算
+  }
+
+  // 背景スクロール
+  gameArea.style.backgroundPosition = bgX + "px 0px";
+
+  // === ゴール出現判定 ===
+  if (!goalAppeared && distanceMoved >= 800) {
+    goalAppeared = true;
+    goal.style.display = "block";
+    goal.style.position = "absolute";
+    goal.style.left = "50%";
+    goal.style.top = "50%";
+    //goal.style.top = goalY + "px";
+    goalX = window.innerWidth; // 画面右端に登場
+    goal.style.left = goalX + "px";
+  }
+
+  // === ゴールを背景と一緒に動かす ===
+  if (goalAppeared) {
+    if (direction === "left") {
+      goalX -= 5; // 背景と一緒に左に移動
+    } else if (direction === "right") {
+      goalX += 5; // 背景を戻すとき右に移動
+    }
+    goal.style.left = goalX + "px";
+  }
+}
+//==============================
+// 障害物関連
+//==============================
+let obstacles = [];
+const obstacleSpeed = 3;
+const obstacleSpawnInterval = 2000; // 2秒ごとに出現
+
+// 障害物生成（背景基準の位置に生成）
+function spawnObstacle() {
+  const obstacle = document.createElement("img");
+  obstacle.src = "image/obstacle.png";
+  obstacle.className = "sprite obstacle";
+  obstacle.style.width = "80px";
+  obstacle.style.height = "80px";
+  obstacle.style.position = "absolute";
+  obstacle.style.pointerEvents = "none";
+  gameArea.appendChild(obstacle);
+
+  // 背景上の座標（背景基準）
+  const startX = -bgX + window.innerWidth + 100; // 背景上の右端に出す
+  const startY = Math.random() * (window.innerHeight - 100);
+
+  obstacles.push({
+    element: obstacle,
+    worldX: startX, // 背景基準でのX位置
+    y: startY
+  });
+}
+
+// 障害物の更新（背景に合わせて動く）
+function updateObstacles() {
+  for (let i = obstacles.length - 1; i >= 0; i--) {
+    const o = obstacles[i];
+
+    // 背景上での位置を更新
+    o.worldX -= obstacleSpeed;
+
+    // 実際の画面上での描画位置を計算
+    const screenX = o.worldX + bgX;
+    o.element.style.left = screenX + "px";
+    o.element.style.top = o.y + "px";
+
+    // 背景左端より左に出たら削除
+    if (screenX < -100) {
+      o.element.remove();
+      obstacles.splice(i, 1);
+      continue;
+    }
+
+    // ===== 当たり判定 =====
+    const rectO = o.element.getBoundingClientRect();
+    const rectP = player.getBoundingClientRect();
+    if (
+      rectO.left < rectP.right &&
+      rectO.right > rectP.left &&
+      rectO.top < rectP.bottom &&
+      rectO.bottom > rectP.top
+    ) {
+      // 衝突処理
+      o.element.remove();
+      obstacles.splice(i, 1);
+      triggerKnockback(); // ← 後退アニメーション呼び出し
+    }
+  }
+}
+
+// 2秒ごとに障害物を出現
+setInterval(() => {
+  if (gameStarted && !isHit) spawnObstacle();
+}, obstacleSpawnInterval);
+function triggerKnockback() {
+  isHit = true; // 後退中は操作禁止
+  const knockbackDistance = 100; // 後退距離
+  const duration = 1000; // ミリ秒（1秒で後退）
+  const steps = 50; // アニメーション分割数
+  const movePerStep = knockbackDistance / steps;
+  const interval = duration / steps;
+
+  let step = 0;
+
+  const knockbackTimer = setInterval(() => {
+    bgX += movePerStep; // 背景を少しずつ右へ動かす
+    gameArea.style.backgroundPosition = `${bgX}px 0px`;
+    step++;
+
+    // 終了判定
+    if (step >= steps) {
+      clearInterval(knockbackTimer);
+      isHit = false; // 操作再開
+    }
+  }, interval);
 }
