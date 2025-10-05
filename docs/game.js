@@ -352,7 +352,7 @@ gameArea.appendChild(timerElement);
 // ゴール表示
 
 const goal = document.createElement("img");
-goal.src = "image/ゴール.png";
+goal.src = "image/goal.png";
 goal.className = "sprite";
 goal.style.display = "none";
 goal.style.left = "50%";
