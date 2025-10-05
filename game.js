@@ -254,6 +254,8 @@ if (goalAppeared && !goalReached) {
 
     // ゴールポップアップ
     alert("🎉 ゴール！クリアおめでとう！");
+    recognition.stop(); // ★音声認識停止
+   window.location.href = "goal.html";
   }
 }
 
@@ -443,11 +445,14 @@ const goal = document.createElement("img");
 goal.src = "image/goal.png";
 goal.className = "sprite";
 goal.style.display = "none";
-goal.style.position = "absolute";
+goal.style.left = "50%";
+goal.style.top = "50%";
+goal.style.transform = "translate(-50%, -50%)";
 goal.style.zIndex = "9999";
-goal.style.height = "auto";
-goal.style.width = "300px";
 gameArea.appendChild(goal);
+goal.style.height = window.innerHeight + "px"; // 画面の高さに合わせる
+goalY = goal.style.height;
+goal.style.width = "auto"; // 比率を保つ
 
 const maxScroll = 2000;
 
@@ -474,7 +479,7 @@ progressBar.style.width = progress + "%";
     if (timeLeft <= 0 && !goalReached) {
       clearInterval(timerInterval);
       recognition.stop(); // ★追加
-      alert("⏰ 時間切れ！失敗です");
+      window.location.href = "win.html";
       gameStarted = false;
     }
   }, 1000);
