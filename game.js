@@ -225,6 +225,10 @@ setInterval(() => {
     else if (cursorX < playerCenterX - 10) bgX += 5;
     gameArea.style.backgroundPosition = bgX + "px 0px";
   }
+  recognition.onend = () => {
+    console.warn("音声認識ストップ（自動再起動）");
+    if (gameStarted) recognition.start();
+  };
 }, 20);
 
 //==============================
@@ -268,7 +272,8 @@ if (!SpeechRecognition) {
 
   recognition.onresult = (event) => {
     const transcript = event.results[event.results.length - 1][0].transcript;
-    console.log("認識結果:", transcript);
+    const isFinal = event.results[event.results.legth -1].isFinal;
+    console.log("認識結果:", transcript,"(final:",isFinal,")");
     
       shootBullet();
   };
