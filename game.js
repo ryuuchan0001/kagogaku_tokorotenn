@@ -240,7 +240,7 @@ setInterval(() => {
     gameStarted = false;
     goal.style.animation = "pulse 1s infinite";
     recognition.stop(); // ★音声認識停止
-    alert("🎉 ゴール！クリアおめでとう！");
+   window.location.href = "goal.html";
   }
 
 }, 20);
@@ -456,7 +456,7 @@ progressBar.style.width = progress + "%";
     if (timeLeft <= 0 && !goalReached) {
       clearInterval(timerInterval);
       recognition.stop(); // ★追加
-      alert("⏰ 時間切れ！失敗です");
+      window.location.href = "win.html";
       gameStarted = false;
     }
   }, 1000);

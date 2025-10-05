@@ -55,6 +55,8 @@ body {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+
 body {
   background-color: white;
   font-family: 'Noto Sans JP', sans-serif;
@@ -71,7 +73,7 @@ body {
 
 .goal {
   font-size: 60px;
-  color: #FFD700;
+  color: #ff0000;
   text-shadow: 2px 2px 0 #000;
   margin: 0;
   letter-spacing: 2px;
@@ -85,7 +87,7 @@ body {
 }
 
 .play-button {
-  background-color: #ffd700;
+  background-color: #ff0000;
   color: #000;
   border: 3px solid #000;
   border-radius: 50px;
@@ -98,6 +100,6 @@ body {
 
 .play-button:hover {
   background-color: #000;
-  color: #ffd700;
+  color: #ff0000;
   transform: scale(1.05);
 }
