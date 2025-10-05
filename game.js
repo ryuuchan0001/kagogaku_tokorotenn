@@ -212,6 +212,7 @@ setInterval(() => {
   if (!gameStarted) return;
   moveEnemy();
   updateBullets();
+  updateObstacles();
 
   if (!isHit) {
     const playerCenterX = playerX + player.offsetWidth / 2;
