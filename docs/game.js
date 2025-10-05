@@ -205,65 +205,6 @@ document.addEventListener("mousemove", (e) => {
 });
 
 //==============================
-<<<<<<< HEAD
-=======
-// ゴール設定
-//==============================
-
-const goal = document.createElement("img");
-goal.src = "../image/ゴール.png";
-goal.className = "sprite";
-goal.style.display = "none";
-goal.style.position = "absolute";
-goal.style.top = "50%";
-goal.style.left = "90%";
-goal.style.transform = "translateY(-50%)";
-goal.style.zIndex = "1";
-goal.style.opacity = "1";
-gameArea.appendChild(goal);
-
-function updateGoalPosition() {
-  goal.style.left = `${window.innerWidth - 200 + bgX}px`; 
-}
-
-//==============================
-// クリア・勝利メッセージ
-//==============================
-const clearMessage = document.createElement("div");
-clearMessage.style.position = "absolute";
-clearMessage.style.top = "50%";
-clearMessage.style.left = "50%";
-clearMessage.style.transform = "translate(-50%, -50%)";
-clearMessage.style.fontSize = "64px";
-clearMessage.style.color = "yellow";
-clearMessage.style.fontFamily = "monospace";
-clearMessage.style.display = "none";
-clearMessage.style.zIndex = "9999";
-clearMessage.textContent = "🎉 勝利！！ 🎉";
-gameArea.appendChild(clearMessage);
-
-//==============================
-// スクロール距離表示
-//==============================
-const scrollDisplay = document.createElement("div");
-scrollDisplay.style.position = "absolute";
-scrollDisplay.style.top = "20px";
-scrollDisplay.style.right = "20px";
-scrollDisplay.style.fontSize = "24px";
-scrollDisplay.style.fontFamily = "monospace";
-scrollDisplay.style.color = "red";
-scrollDisplay.style.zIndex = "9999";
-scrollDisplay.textContent = "距離: 0 / 1000"; // 初期表示
-gameArea.appendChild(scrollDisplay);
-
-// ゴールまでの距離(px換算)
-const goalDistance = 1000; 
-
-let scrollCount = 0;
-let prevBgX = bgX; // 前フレームのbgX
-
-//==============================
->>>>>>> sin_goal
 // メインループ
 //==============================
 setInterval(() => {
@@ -280,39 +221,13 @@ setInterval(() => {
     playerY = Math.max(0, Math.min(window.innerHeight - player.offsetHeight, playerY));
     player.style.top = playerY + "px";
 
-    if (cursorX > playerCenterX + 10) bgX -= 5; // 右スクロール
-    else if (cursorX < playerCenterX - 10) bgX += 5; // 左スクロール
+    if (cursorX > playerCenterX + 10) bgX -= 5;
+    else if (cursorX < playerCenterX - 10) bgX += 5;
     gameArea.style.backgroundPosition = bgX + "px 0px";
-<<<<<<< HEAD
-=======
-
-    // スクロール量の更新（左に進むと増え、右に戻ると減る）
-    let delta = prevBgX - bgX; 
-    scrollCount += delta; 
-    prevBgX = bgX;
-
-    // 距離表示
-    let distance = Math.max(0, Math.floor(scrollCount));
-    distance = Math.min(distance, goalDistance); // ゴールを超えない
-    scrollDisplay.textContent = `距離: ${distance} / ${goalDistance}`;
-
-    // ゴール到達判定（スクロール距離ベース）
-    if (distance >= goalDistance && !gameCleared) {
-      gameCleared = true;
-      clearMessage.style.display = "block";
-
-      goal.style.display = "block";
-      updateGoalPosition();
-      goal.style.opacity = "0.4";
-      goal.style.filter = "brightness(0.8)";
-      console.log("🎉 ゴール到達！勝利！！");
-    }
->>>>>>> sin_goal
   }
 }, 20);
 
 //==============================
-<<<<<<< HEAD
 // カウントダウンと残り時間タイマ-
 // カウントダウンとゲーム開始
 //==============================
@@ -393,61 +308,29 @@ function getVolume() {
 
 //==============================
 // カウントダウンとゲーム開始
-=======
-// タイマー関連（完全修正版）
->>>>>>> sin_goal
 //==============================
-
-// タイマー表示
-let timeLeft = 10;
-const timerElement = document.createElement("div");
-timerElement.style.position = "absolute";
-timerElement.style.top = "20px";
-timerElement.style.left = "20px";
-timerElement.style.color = "red";
-timerElement.style.fontSize = "32px";
-timerElement.style.fontFamily = "monospace";
-timerElement.style.zIndex = "9999";
-timerElement.textContent = `残り時間: ${timeLeft}`;
-gameArea.appendChild(timerElement);
-
-// グローバルタイマー変数
-let timerInterval = null;
-
-//------------------------------
-// カウントダウン（3,2,1,START）
-//------------------------------
 function startCountdown() {
   const countdownEl = document.getElementById("countdown");
   let count = 3;
   countdownEl.innerText = count;
-
-  const countdownTimer = setInterval(() => {
+  let timer = setInterval(() => {
     count--;
-    if (count > 0) {
-      countdownEl.innerText = count;
-    } else if (count === 0) {
-      countdownEl.innerText = "START!";
-    } else {
-      clearInterval(countdownTimer);
+    if (count > 0) countdownEl.innerText = count;
+    else if (count === 0) countdownEl.innerText = "START!";
+    else {
+      clearInterval(timer);
       countdownEl.style.display = "none";
       gameStarted = true;
 
-<<<<<<< HEAD
       // 🎤 音声認識スタート
       recognition.start();
       console.log("音声認識スタート");
-=======
-      // ★ ゲーム開始後に1回だけタイマーを起動
-      if (!timerInterval) startGameTimer();
->>>>>>> sin_goal
     }
   }, 1000);
 }
 
 
 
-<<<<<<< HEAD
 //==============================
 // タイマー・ゴール表示
 //==============================
@@ -514,37 +397,7 @@ function startMainTimer() {
     if (timeLeft <= 0) {
       clearInterval(timerInterval);
       goal.style.display = "block";
-=======
-//------------------------------
-// 残り時間タイマー
-//------------------------------
-function startGameTimer() {
-  timerInterval = setInterval(() => {
-    if (isHit || gameCleared) return;
-
-    // タイマーを減らす
-    timeLeft--;
-
-    // 表示更新
-    timerElement.textContent = `残り時間: ${timeLeft}`;
-
-    // タイムアップ判定
-    if (timeLeft <= 0) {
-      clearInterval(timerInterval);
-      timerInterval = null; // ← 再実行防止
-      timeLeft = 0; // ← 表示を0で止める
-      timerElement.textContent = `残り時間: 0`;
-
-      // ゴール出現
-      goal.style.display = "block";
-      updateGoalPosition();
->>>>>>> sin_goal
     }
   }, 1000);
 }
 
-<<<<<<< HEAD
-=======
-
-
->>>>>>> sin_goal
