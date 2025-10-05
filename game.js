@@ -225,6 +225,10 @@ setInterval(() => {
     else if (cursorX < playerCenterX - 10) bgX += 5;
     gameArea.style.backgroundPosition = bgX + "px 0px";
   }
+  recognition.onend = () => { 
+    console.warn("音声認識ストップ（自動再起動）"); 
+    if (gameStarted) recognition.start(); 
+  };
 }, 20);
 //==============================
 // カウントダウンと残り時間タイマ-
