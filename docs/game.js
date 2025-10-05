@@ -321,6 +321,7 @@ function startCountdown() {
       clearInterval(timer);
       countdownEl.style.display = "none";
       gameStarted = true;
+      startMainTimer();
 
       // 🎤 音声認識スタート
       recognition.start();
@@ -361,6 +362,7 @@ goal.style.transform = "translate(-50%, -50%)";
 goal.style.zIndex = "9999";
 gameArea.appendChild(goal);
 
+/*
 // スタートカウント表示
 let startCount = 3;
 const startTimer = document.createElement("div");
@@ -387,6 +389,8 @@ const startInterval = setInterval(() => {
     startMainTimer();
   }
 }, 1000);
+
+*/
 
 // 残り時間タイマー本処理
 function startMainTimer() {
