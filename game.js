@@ -322,6 +322,7 @@ function startCountdown() {
       clearInterval(timer);
       countdownEl.style.display = "none";
       gameStarted = true;
+      startMainTimer();
 
       // 🎤 音声認識スタート
       recognition.start();
