@@ -14,6 +14,14 @@ let gameStarted = false;
 let recognition;
 let audioContext;
 
+// ★ ゴール関連統一管理
+const goalDistance = 2200;
+let distanceMoved = 0;
+let goalAppeared = false;
+let goalReached = false;
+let goalX = window.innerWidth + 200;
+let goalY = window.innerHeight / 2 - 100;
+
 //==============================
 // 当たり判定ポリゴンデータ(JSON)
 //==============================
@@ -94,7 +102,7 @@ function projectPolygon(polygon, axis) {
 }
 
 //==============================
-// 敵の動き・弾の処理
+// 敵の動き・弾処理
 //==============================
 function moveEnemy() {
   enemyY += enemySpeed;
@@ -171,11 +179,11 @@ document.addEventListener("keydown", (e) => {
   if (isHit) return;
   if (e.key === "ArrowUp") playerY -= 10;
   if (e.key === "ArrowDown") playerY += 10;
-  if (e.key === "ArrowLeft") bgX += 10;
-  if (e.key === "ArrowRight") bgX -= 10;
+  if (e.key === "ArrowLeft") moveBackground("right");
+  if (e.key === "ArrowRight") moveBackground("left");
+
   playerY = Math.max(0, Math.min(window.innerHeight - player.offsetHeight, playerY));
   player.style.top = playerY + "px";
-  gameArea.style.backgroundPosition = bgX + "px 0px";
 });
 
 //==============================
@@ -207,21 +215,16 @@ setInterval(() => {
 
     if (cursorX > playerCenterX + 10) moveBackground("left");
     else if (cursorX < playerCenterX - 10) moveBackground("right");
-
-    gameArea.style.backgroundPosition = bgX + "px 0px";
   }
-  if (goalAppeared && !isHit) {
-  const goalRect = goal.getBoundingClientRect();
-  const playerRect = player.getBoundingClientRect();
 
-  if (
-    distanceMoved >= 2200
-  ) {
+  // === ゴール判定 ===
+  if (goalAppeared && !goalReached && distanceMoved >= goalDistance) {
+    goalReached = true;
     gameStarted = false;
     goal.style.animation = "pulse 1s infinite";
+    recognition.stop(); // ★音声認識停止
     alert("🎉 ゴール！クリアおめでとう！");
   }
-}
 
 }, 20);
 
@@ -288,9 +291,9 @@ function getVolume() {
 //==============================
 // タイマー・ゴール・進捗バー
 //==============================
-let timeLeft = 10;
+let timeLeft = 100; // ★延長
 const timerElement = document.createElement("div");
-timerElement.style.position = "absolute";
+timerElement.style.position = "fixed"; // ★スクロール影響防止
 timerElement.style.top = "20px";
 timerElement.style.left = "20px";
 timerElement.style.color = "black";
@@ -302,7 +305,7 @@ gameArea.appendChild(timerElement);
 
 // 進捗バー
 const progressBarBg = document.createElement("div");
-progressBarBg.style.position = "absolute";
+progressBarBg.style.position = "fixed";
 progressBarBg.style.bottom = "20px";
 progressBarBg.style.left = "50%";
 progressBarBg.style.transform = "translateX(-50%)";
@@ -319,6 +322,7 @@ progressBar.style.width = "0%";
 progressBar.style.height = "100%";
 progressBar.style.backgroundColor = "#0f0";
 progressBar.style.borderRadius = "3px";
+progressBar.style.transition = "width 0.2s linear";
 progressBarBg.appendChild(progressBar);
 
 // ゴール表示
@@ -326,93 +330,74 @@ const goal = document.createElement("img");
 goal.src = "image/goal.png";
 goal.className = "sprite";
 goal.style.display = "none";
-goal.style.left = "50%";
-goal.style.top = "50%";
-goal.style.transform = "translate(-50%, -50%)";
+goal.style.position = "absolute";
 goal.style.zIndex = "9999";
+goal.style.height = "auto";
+goal.style.width = "300px";
 gameArea.appendChild(goal);
-goal.style.height = window.innerHeight + "px";
-goal.style.width = "auto";
 
 const maxScroll = 2000;
-let goalReached = false;
 
+//==============================
+// タイマー処理
+//==============================
 function startMainTimer() {
   const timerInterval = setInterval(() => {
-    if (isHit) return;
+    if (isHit || goalReached) return;
 
     timeLeft--;
     timerElement.textContent = `残り時間: ${timeLeft}`;
 
-    let progress = Math.min(Math.abs(bgX) / maxScroll * 100, 100);
-    progressBar.style.width = progress + "%";
+    // ゴールまで残り50pxくらいで満タンに見せる補正
+const buffer = 128; // ゴール直前でバーを満タンにする距離
+let progress = Math.min((distanceMoved / (goalDistance - buffer)) * 100, 100);
+progressBar.style.width = progress + "%";
 
-    if (progress >= 100 && !goalReached) {
-      goalReached = true;
-      goal.style.display = "block";
-      clearInterval(timerInterval);
-      alert("🎉 ゴール成功！");
-    }
-
+    // ★時間切れ
     if (timeLeft <= 0 && !goalReached) {
       clearInterval(timerInterval);
+      recognition.stop(); // ★追加
       alert("⏰ 時間切れ！失敗です");
+      gameStarted = false;
     }
-
   }, 1000);
 }
 
-// ==============================
-// ゴール出現と背景連動
-// ==============================
-let distanceMoved = 0;     // プレイヤーが進んだ距離
-let goalAppeared = false;  // ゴール出現フラグ
-let goalX = window.innerWidth + 200; // 初期ゴール位置（画面外）
-let goalY = window.innerHeight / 2 - 100;
-
-// 背景移動関数（カーソル移動時に呼び出す）
+//==============================
+// 背景移動とゴール同期
+//==============================
 function moveBackground(direction) {
+  if (goalReached) return;
+
   if (direction === "left") {
     bgX -= 5;
-    distanceMoved += 5; // 進んだ距離を加算
+    distanceMoved += 5;
   } else if (direction === "right") {
     bgX += 5;
-    distanceMoved = Math.max(0, distanceMoved - 5); // 後退時に減算
+    distanceMoved = Math.max(0, distanceMoved - 5);
   }
 
-  // 背景スクロール
   gameArea.style.backgroundPosition = bgX + "px 0px";
 
-  // === ゴール出現判定 ===
   if (!goalAppeared && distanceMoved >= 800) {
     goalAppeared = true;
     goal.style.display = "block";
-    goal.style.position = "absolute";
-    goal.style.left = "50%";
-    goal.style.top = "50%";
-    //goal.style.top = goalY + "px";
-    goalX = window.innerWidth; // 画面右端に登場
-    goal.style.left = goalX + "px";
+    goalX = goalDistance;
   }
 
-  // === ゴールを背景と一緒に動かす ===
   if (goalAppeared) {
-    if (direction === "left") {
-      goalX -= 5; // 背景と一緒に左に移動
-    } else if (direction === "right") {
-      goalX += 5; // 背景を戻すとき右に移動
-    }
-    goal.style.left = goalX + "px";
+   goal.style.left = `${goalX - distanceMoved}px`; // ★スクロール連動で表示
+    goal.style.top = `${goalY}px`;
   }
 }
+
 //==============================
 // 障害物関連
 //==============================
 let obstacles = [];
 const obstacleSpeed = 3;
-const obstacleSpawnInterval = 2000; // 2秒ごとに出現
+const obstacleSpawnInterval = 2000;
 
-// 障害物生成（背景基準の位置に生成）
 function spawnObstacle() {
   const obstacle = document.createElement("img");
   obstacle.src = "image/obstacle.png";
@@ -423,38 +408,30 @@ function spawnObstacle() {
   obstacle.style.pointerEvents = "none";
   gameArea.appendChild(obstacle);
 
-  // 背景上の座標（背景基準）
-  const startX = -bgX + window.innerWidth + 100; // 背景上の右端に出す
+  const startX = -bgX + window.innerWidth + 100;
   const startY = Math.random() * (window.innerHeight - 100);
 
   obstacles.push({
     element: obstacle,
-    worldX: startX, // 背景基準でのX位置
+    worldX: startX,
     y: startY
   });
 }
 
-// 障害物の更新（背景に合わせて動く）
 function updateObstacles() {
   for (let i = obstacles.length - 1; i >= 0; i--) {
     const o = obstacles[i];
-
-    // 背景上での位置を更新
     o.worldX -= obstacleSpeed;
-
-    // 実際の画面上での描画位置を計算
     const screenX = o.worldX + bgX;
     o.element.style.left = screenX + "px";
     o.element.style.top = o.y + "px";
 
-    // 背景左端より左に出たら削除
     if (screenX < -100) {
       o.element.remove();
       obstacles.splice(i, 1);
       continue;
     }
 
-    // ===== 当たり判定 =====
     const rectO = o.element.getBoundingClientRect();
     const rectP = player.getBoundingClientRect();
     if (
@@ -463,37 +440,34 @@ function updateObstacles() {
       rectO.top < rectP.bottom &&
       rectO.bottom > rectP.top
     ) {
-      // 衝突処理
       o.element.remove();
       obstacles.splice(i, 1);
-      triggerKnockback(); // ← 後退アニメーション呼び出し
+      triggerKnockback();
     }
   }
 }
 
-// 2秒ごとに障害物を出現
 setInterval(() => {
   if (gameStarted && !isHit) spawnObstacle();
 }, obstacleSpawnInterval);
+
 function triggerKnockback() {
-  isHit = true; // 後退中は操作禁止
-  const knockbackDistance = 100; // 後退距離
-  const duration = 1000; // ミリ秒（1秒で後退）
-  const steps = 50; // アニメーション分割数
+  isHit = true;
+  const knockbackDistance = 100;
+  const duration = 1000;
+  const steps = 50;
   const movePerStep = knockbackDistance / steps;
   const interval = duration / steps;
-
   let step = 0;
 
   const knockbackTimer = setInterval(() => {
-    bgX += movePerStep; // 背景を少しずつ右へ動かす
+    bgX += movePerStep;
+    distanceMoved = Math.max(0, distanceMoved - movePerStep);
     gameArea.style.backgroundPosition = `${bgX}px 0px`;
     step++;
-
-    // 終了判定
     if (step >= steps) {
       clearInterval(knockbackTimer);
-      isHit = false; // 操作再開
+      isHit = false;
     }
   }, interval);
 }
