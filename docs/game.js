@@ -109,7 +109,7 @@ function moveEnemy() {
 
 function shootBullet() {
   const bullet = document.createElement("img");
-  bullet.src = "../image/bind.png";
+  bullet.src = "image/bind.png";
   bullet.className = "bullet";
   gameArea.appendChild(bullet);
 
@@ -352,7 +352,7 @@ gameArea.appendChild(timerElement);
 // ゴール表示
 
 const goal = document.createElement("img");
-goal.src = "../image/ゴール.png";
+goal.src = "image/ゴール.png";
 goal.className = "sprite";
 goal.style.display = "none";
 goal.style.left = "50%";
