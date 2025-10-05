@@ -62,10 +62,7 @@ const hitboxData = {
 function getPolygonFromJSON(element, type) {
   const json = hitboxData[type];
   const rect = element.getBoundingClientRect();
-<<<<<<< HEAD
-=======
 
->>>>>>> audio
   return json.map(p => ({
     x: rect.left + p.nx * rect.width,
     y: rect.top + p.ny * rect.height
@@ -84,24 +81,16 @@ function polygonsCollide(polyA, polyB) {
       const edgeX = polygon[k].x - polygon[j].x;
       const edgeY = polygon[k].y - polygon[j].y;
       const normal = { x: -edgeY, y: edgeX };
-<<<<<<< HEAD
-      let [minA, maxA] = projectPolygon(polyA, normal);
-      let [minB, maxB] = projectPolygon(polyB, normal);
-=======
 
       let [minA, maxA] = projectPolygon(polyA, normal);
       let [minB, maxB] = projectPolygon(polyB, normal);
 
->>>>>>> audio
       if (maxA < minB || maxB < minA) return false;
     }
   }
   return true;
 }
-<<<<<<< HEAD
-=======
 
->>>>>>> audio
 function projectPolygon(polygon, axis) {
   const dots = polygon.map(p => (p.x * axis.x + p.y * axis.y));
   return [Math.min(...dots), Math.max(...dots)];
@@ -112,19 +101,14 @@ function projectPolygon(polygon, axis) {
 //==============================
 function moveEnemy() {
   enemyY += enemySpeed;
-<<<<<<< HEAD
+
   if (enemyY <= 0 || enemyY >= window.innerHeight - 100) enemySpeed *= -1;
-=======
-  if (enemyY <= 0 || enemyY >= window.innerHeight - 100) {
-    enemySpeed *= -1;
-  }
->>>>>>> audio
+
   enemy.style.top = enemyY + "px";
 }
 
 function shootBullet() {
   const bullet = document.createElement("img");
-<<<<<<< HEAD
   bullet.src = "../image/bind.png";
   bullet.className = "bullet";
   gameArea.appendChild(bullet);
@@ -138,42 +122,22 @@ function shootBullet() {
     worldY: startWorldY,
     speed: -15
   });
-=======
-  bullet.src = "../image/しばる.png";
-  bullet.className = "bullet";
-  gameArea.appendChild(bullet);
-
-  const startX = enemy.offsetLeft;
-  const startY = enemyY + enemy.offsetHeight / 2 - 20;
-
-  bullets.push({ element: bullet, x: startX, y: startY, speed: -5 });
->>>>>>> audio
 }
 
 function updateBullets() {
   bullets.forEach((b, index) => {
-<<<<<<< HEAD
     b.worldX += b.speed;
     b.element.style.left = (b.worldX + bgX) + "px";
     b.element.style.top = b.worldY + "px";
 
     if (b.worldX + bgX < -50) {
-=======
-    b.x += b.speed;
-    b.element.style.left = b.x + "px";
-    b.element.style.top = b.y + "px";
 
-    if (b.x < -50) {
->>>>>>> audio
       b.element.remove();
       bullets.splice(index, 1);
       return;
     }
 
-<<<<<<< HEAD
-=======
     // ==== 当たり判定（ポリゴン同士） ====
->>>>>>> audio
     if (!isHit) {
       const bulletRect = b.element.getBoundingClientRect();
       const bulletPoly = [
@@ -183,15 +147,11 @@ function updateBullets() {
         {x: bulletRect.left, y: bulletRect.bottom}
       ];
       const playerPoly = getPolygonFromJSON(player, "free");
-<<<<<<< HEAD
-=======
-
->>>>>>> audio
       if (polygonsCollide(playerPoly, bulletPoly)) {
         handleHit();
         b.element.remove();
         bullets.splice(index, 1);
-      }
+      };
     }
   });
 }
@@ -268,12 +228,7 @@ setInterval(() => {
 }, 20);
 
 //==============================
-<<<<<<< HEAD
-<<<<<<<< HEAD:docs/js/game.js
-// カウントダウンと残り時間タイマー
-========
-=======
->>>>>>> audio
+// カウントダウンと残り時間タイマ-
 // カウントダウンとゲーム開始
 //==============================
 function startCountdown() {
@@ -378,16 +333,11 @@ function startCountdown() {
 
 //==============================
 // タイマー・ゴール表示
-<<<<<<< HEAD
->>>>>>>> audio:game.js
 //==============================
 let timeLeft = 10;
 
 // タイマー表示（最初から表示）
-=======
-//==============================
-let timeLeft = 10;
->>>>>>> audio
+
 const timerElement = document.createElement("div");
 timerElement.style.position = "absolute";
 timerElement.style.top = "20px";
@@ -399,10 +349,8 @@ timerElement.style.zIndex = "9999";
 timerElement.textContent = `残り時間: ${timeLeft}`;
 gameArea.appendChild(timerElement);
 
-<<<<<<< HEAD
 // ゴール表示
-=======
->>>>>>> audio
+
 const goal = document.createElement("img");
 goal.src = "../image/ゴール.png";
 goal.className = "sprite";
@@ -413,7 +361,6 @@ goal.style.transform = "translate(-50%, -50%)";
 goal.style.zIndex = "9999";
 gameArea.appendChild(goal);
 
-<<<<<<< HEAD
 // スタートカウント表示
 let startCount = 3;
 const startTimer = document.createElement("div");
@@ -453,14 +400,4 @@ function startMainTimer() {
     }
   }, 1000);
 }
-=======
-const timerInterval = setInterval(() => {
-  if (isHit) return;
-  timeLeft--;
-  timerElement.textContent = `残り時間: ${timeLeft}`;
-  if (timeLeft <= 0) {
-    clearInterval(timerInterval);
-    goal.style.display = "block";
-  }
-}, 1000);
->>>>>>> audio
+
