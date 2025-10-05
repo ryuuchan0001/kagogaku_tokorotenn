@@ -235,13 +235,27 @@ setInterval(() => {
   }
 
   // === ゴール判定 ===
-  if (goalAppeared && !goalReached && distanceMoved >= goalDistance) {
+if (goalAppeared && !goalReached) {
+  const screenX = goalX - distanceMoved; // ゴールのスクリーン上座標
+  const playerRight = playerX + player.offsetWidth;
+
+  if (playerRight >= screenX) { // プレイヤーがゴールに到達した
     goalReached = true;
     gameStarted = false;
+
+    // ★ ゴールした瞬間にバーを満タン
+    progressBar.style.width = "100%";
+
+    // ゴール画像アニメーション
     goal.style.animation = "pulse 1s infinite";
-    recognition.stop(); // ★音声認識停止
+
+    // 音声認識停止
+    recognition.stop();
+
+    // ゴールポップアップ
     alert("🎉 ゴール！クリアおめでとう！");
   }
+}
 
 }, 20);
 
@@ -442,15 +456,19 @@ const maxScroll = 2000;
 //==============================
 function startMainTimer() {
   const timerInterval = setInterval(() => {
-    if (isHit || goalReached) return;
+    if (isHit) return; // ゴール到達前でも後退中はスキップ
 
     timeLeft--;
     timerElement.textContent = `残り時間: ${timeLeft}`;
 
-    // ゴールまで残り50pxくらいで満タンに見せる補正
-const buffer = 128; // ゴール直前でバーを満タンにする距離
-let progress = Math.min((distanceMoved / (goalDistance - buffer)) * 100, 100);
+    // 進捗バー計算
+let progress = Math.min((distanceMoved / goalDistance) * 100, 100);
+
+// ゴール到達時は強制的に100%
+if (goalReached) progress = 100;
+
 progressBar.style.width = progress + "%";
+
 
     // ★時間切れ
     if (timeLeft <= 0 && !goalReached) {
