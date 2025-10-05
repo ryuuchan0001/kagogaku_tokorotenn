@@ -221,10 +221,27 @@ setInterval(() => {
     playerY = Math.max(0, Math.min(window.innerHeight - player.offsetHeight, playerY));
     player.style.top = playerY + "px";
 
-    if (cursorX > playerCenterX + 10) bgX -= 5;
-    else if (cursorX < playerCenterX - 10) bgX += 5;
+    if (cursorX > playerCenterX + 10) moveBackground("left");
+    else if (cursorX < playerCenterX - 10) moveBackground("right");
+
     gameArea.style.backgroundPosition = bgX + "px 0px";
   }
+  if (goalAppeared && !isHit) {
+  const goalRect = goal.getBoundingClientRect();
+  const playerRect = player.getBoundingClientRect();
+
+  if (
+    playerRect.right > goalRect.left &&
+    playerRect.left < goalRect.right &&
+    playerRect.bottom > goalRect.top &&
+    playerRect.top < goalRect.bottom
+  ) {
+    gameStarted = false;
+    goal.style.animation = "pulse 1s infinite";
+    alert("🎉 ゴール！クリアおめでとう！");
+  }
+}
+
 }, 20);
 
 //==============================
@@ -379,3 +396,46 @@ function startMainTimer() {
   }, 1000);
 }
 
+// ==============================
+// ゴール出現と背景連動
+// ==============================
+let distanceMoved = 0;     // プレイヤーが進んだ距離
+let goalAppeared = false;  // ゴール出現フラグ
+let goalX = window.innerWidth + 200; // 初期ゴール位置（画面外）
+let goalY = window.innerHeight / 2 - 100;
+
+// 背景移動関数（カーソル移動時に呼び出す）
+function moveBackground(direction) {
+  if (direction === "left") {
+    bgX -= 5;
+    distanceMoved += 5; // 進んだ距離を加算
+  } else if (direction === "right") {
+    bgX += 5;
+    distanceMoved = Math.max(0, distanceMoved - 5); // 後退時に減算
+  }
+
+  // 背景スクロール
+  gameArea.style.backgroundPosition = bgX + "px 0px";
+
+  // === ゴール出現判定 ===
+  if (!goalAppeared && distanceMoved >= 800) {
+    goalAppeared = true;
+    goal.style.display = "block";
+    goal.style.position = "absolute";
+    goal.style.left = "50%";
+    goal.style.top = "50%";
+    goal.style.top = goalY + "px";
+    goalX = window.innerWidth; // 画面右端に登場
+    goal.style.left = goalX + "px";
+  }
+
+  // === ゴールを背景と一緒に動かす ===
+  if (goalAppeared) {
+    if (direction === "left") {
+      goalX -= 5; // 背景と一緒に左に移動
+    } else if (direction === "right") {
+      goalX += 5; // 背景を戻すとき右に移動
+    }
+    goal.style.left = goalX + "px";
+  }
+}
