@@ -254,7 +254,15 @@ function startCountdown() {
         await setupAudio();
       }
       recognition.start();
-      console.log("音声認識スタート");
+    recognition.onstart = () => {
+      console.log(" 音声認識スタート");
+    };
+
+    recognition.onend = () => {
+      console.warn("音声認識ストップ（自動再起動）");
+      if (gameStarted) recognition.start();
+    };
+
     }
   }, 1000);
 }
