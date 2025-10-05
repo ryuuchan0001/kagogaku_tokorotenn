@@ -225,12 +225,7 @@ setInterval(() => {
     else if (cursorX < playerCenterX - 10) bgX += 5;
     gameArea.style.backgroundPosition = bgX + "px 0px";
   }
-  recognition.onend = () => {
-    console.warn("音声認識ストップ（自動再起動）");
-    if (gameStarted) recognition.start();
-  };
 }, 20);
-
 //==============================
 // カウントダウンと残り時間タイマ-
 // カウントダウンとゲーム開始
@@ -247,22 +242,13 @@ function startCountdown() {
       clearInterval(timer);
       countdownEl.style.display = "none";
       gameStarted = true;
-      startMainTimer()
 
       //音声認識スタート
       if (!audioContext) {
         await setupAudio();
       }
       recognition.start();
-    recognition.onstart = () => {
-      console.log(" 音声認識スタート");
-    };
-
-    recognition.onend = () => {
-      console.warn("音声認識ストップ（自動再起動）");
-      if (gameStarted) recognition.start();
-    };
-
+      console.log("音声認識スタート");
     }
   }, 1000);
 }
@@ -281,8 +267,7 @@ if (!SpeechRecognition) {
 
   recognition.onresult = (event) => {
     const transcript = event.results[event.results.length - 1][0].transcript;
-    const isFinal = event.results[event.results.legth -1].isFinal;
-    console.log("認識結果:", transcript,"(final:",isFinal,")");
+    console.log("認識結果:", transcript);
     
       shootBullet();
   };
@@ -319,7 +304,7 @@ function getVolume() {
   }
   return values / dataArray.length;
 }
-/*
+
 //==============================
 // カウントダウンとゲーム開始
 //==============================
@@ -336,14 +321,12 @@ function startCountdown() {
       countdownEl.style.display = "none";
       gameStarted = true;
       startMainTimer();
-
       // 🎤 音声認識スタート
       recognition.start();
       console.log("音声認識スタート");
     }
   }, 1000);
 }
-*/
 
 
 //==============================
@@ -357,7 +340,7 @@ const timerElement = document.createElement("div");
 timerElement.style.position = "absolute";
 timerElement.style.top = "20px";
 timerElement.style.left = "20px";
-timerElement.style.color = "brack";
+timerElement.style.color = "red";
 timerElement.style.fontSize = "32px";
 timerElement.style.fontFamily = "monospace";
 timerElement.style.zIndex = "9999";
@@ -375,9 +358,34 @@ goal.style.top = "50%";
 goal.style.transform = "translate(-50%, -50%)";
 goal.style.zIndex = "9999";
 gameArea.appendChild(goal);
-goal.style.height = window.innerHeight + "px"; // 画面の高さに合わせる
-goal.style.width = "auto"; // 比率を保つ
 
+/*
+// スタートカウント表示
+let startCount = 3;
+const startTimer = document.createElement("div");
+startTimer.style.position = "absolute";
+startTimer.style.top = "50%";
+startTimer.style.left = "50%";
+startTimer.style.transform = "translate(-50%, -50%)";
+startTimer.style.color = "yellow";
+startTimer.style.fontSize = "80px";
+startTimer.style.fontFamily = "monospace";
+startTimer.style.zIndex = "9999";
+startTimer.textContent = startCount;
+gameArea.appendChild(startTimer);
+// スタートカウントダウン
+const startInterval = setInterval(() => {
+  startCount--;
+  if (startCount > 0) startTimer.textContent = startCount;
+  else if (startCount === 0) startTimer.textContent = "START!";
+  else {
+    clearInterval(startInterval);
+    startTimer.remove();
+    gameStarted = true;
+    startMainTimer();
+  }
+}, 1000);
+*/
 
 // 残り時間タイマー本処理
 function startMainTimer() {
