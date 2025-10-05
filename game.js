@@ -62,7 +62,6 @@ const hitboxData = {
 function getPolygonFromJSON(element, type) {
   const json = hitboxData[type];
   const rect = element.getBoundingClientRect();
-
   return json.map(p => ({
     x: rect.left + p.nx * rect.width,
     y: rect.top + p.ny * rect.height
@@ -81,10 +80,8 @@ function polygonsCollide(polyA, polyB) {
       const edgeX = polygon[k].x - polygon[j].x;
       const edgeY = polygon[k].y - polygon[j].y;
       const normal = { x: -edgeY, y: edgeX };
-
       let [minA, maxA] = projectPolygon(polyA, normal);
       let [minB, maxB] = projectPolygon(polyB, normal);
-
       if (maxA < minB || maxB < minA) return false;
     }
   }
@@ -101,9 +98,7 @@ function projectPolygon(polygon, axis) {
 //==============================
 function moveEnemy() {
   enemyY += enemySpeed;
-
   if (enemyY <= 0 || enemyY >= window.innerHeight - 100) enemySpeed *= -1;
-
   enemy.style.top = enemyY + "px";
 }
 
@@ -112,16 +107,9 @@ function shootBullet() {
   bullet.src = "image/bind.png";
   bullet.className = "bullet";
   gameArea.appendChild(bullet);
-
   const startWorldX = -bgX + enemy.offsetLeft;
   const startWorldY = enemyY + enemy.offsetHeight / 2 - 20;
-
-  bullets.push({
-    element: bullet,
-    worldX: startWorldX,
-    worldY: startWorldY,
-    speed: -15
-  });
+  bullets.push({ element: bullet, worldX: startWorldX, worldY: startWorldY, speed: -15 });
 }
 
 function updateBullets() {
@@ -131,27 +119,25 @@ function updateBullets() {
     b.element.style.top = b.worldY + "px";
 
     if (b.worldX + bgX < -50) {
-
       b.element.remove();
       bullets.splice(index, 1);
       return;
     }
 
-    // ==== 当たり判定（ポリゴン同士） ====
     if (!isHit) {
       const bulletRect = b.element.getBoundingClientRect();
       const bulletPoly = [
-        {x: bulletRect.left, y: bulletRect.top},
-        {x: bulletRect.right, y: bulletRect.top},
-        {x: bulletRect.right, y: bulletRect.bottom},
-        {x: bulletRect.left, y: bulletRect.bottom}
+        { x: bulletRect.left, y: bulletRect.top },
+        { x: bulletRect.right, y: bulletRect.top },
+        { x: bulletRect.right, y: bulletRect.bottom },
+        { x: bulletRect.left, y: bulletRect.bottom }
       ];
       const playerPoly = getPolygonFromJSON(player, "free");
       if (polygonsCollide(playerPoly, bulletPoly)) {
         handleHit();
         b.element.remove();
         bullets.splice(index, 1);
-      };
+      }
     }
   });
 }
@@ -183,12 +169,10 @@ function handleHit() {
 document.addEventListener("keydown", (e) => {
   if (e.key === "Shift") shootBullet();
   if (isHit) return;
-
   if (e.key === "ArrowUp") playerY -= 10;
   if (e.key === "ArrowDown") playerY += 10;
   if (e.key === "ArrowLeft") bgX += 10;
   if (e.key === "ArrowRight") bgX -= 10;
-
   playerY = Math.max(0, Math.min(window.innerHeight - player.offsetHeight, playerY));
   player.style.top = playerY + "px";
   gameArea.style.backgroundPosition = bgX + "px 0px";
@@ -215,7 +199,6 @@ setInterval(() => {
   if (!isHit) {
     const playerCenterX = playerX + player.offsetWidth / 2;
     const playerCenterY = playerY + player.offsetHeight / 2;
-
     if (cursorY < playerCenterY - 5) playerY -= 5;
     if (cursorY > playerCenterY + 5) playerY += 5;
     playerY = Math.max(0, Math.min(window.innerHeight - player.offsetHeight, playerY));
@@ -225,21 +208,20 @@ setInterval(() => {
     else if (cursorX < playerCenterX - 10) bgX += 5;
     gameArea.style.backgroundPosition = bgX + "px 0px";
   }
+
   recognition.onend = () => {
-    console.warn("音声認識ストップ（自動再起動）");
     if (gameStarted) recognition.start();
   };
 }, 20);
 
 //==============================
-// カウントダウンと残り時間タイマ-
 // カウントダウンとゲーム開始
 //==============================
 function startCountdown() {
   const countdownEl = document.getElementById("countdown");
   let count = 3;
   countdownEl.innerText = count;
-  let timer = setInterval(async() => {
+  let timer = setInterval(async () => {
     count--;
     if (count > 0) countdownEl.innerText = count;
     else if (count === 0) countdownEl.innerText = "START!";
@@ -247,51 +229,33 @@ function startCountdown() {
       clearInterval(timer);
       countdownEl.style.display = "none";
       gameStarted = true;
-      startMainTimer()
-
-      //音声認識スタート
-      if (!audioContext) {
-        await setupAudio();
-      }
+      startMainTimer();
+      if (!audioContext) await setupAudio();
       recognition.start();
-      console.log("音声認識スタート");
     }
   }, 1000);
 }
 
 //==============================
-// 音声認識の準備（SpeechRecognitionの初期化）
+// 音声認識準備
 //==============================
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-if (!SpeechRecognition) {
-  alert("このブラウザは音声認識に対応していません");
-} else {
+if (!SpeechRecognition) alert("このブラウザは音声認識に対応していません");
+else {
   recognition = new SpeechRecognition();
   recognition.lang = 'ja-JP';
   recognition.continuous = true;
   recognition.interimResults = false;
-
   recognition.onresult = (event) => {
     const transcript = event.results[event.results.length - 1][0].transcript;
-    const isFinal = event.results[event.results.legth -1].isFinal;
-    console.log("認識結果:", transcript,"(final:",isFinal,")");
-    
-      shootBullet();
+    shootBullet();
   };
-
-  recognition.onerror = (event) => {
-    console.error("音声認識エラー:", event.error);
-  };
-
-  // 音声認識と音量解析の準備ができたら、ゲーム開始
-  setupAudio().then(() => {
-    console.log("マイクと音声認識の準備完了");
-    startCountdown();
-  });
+  recognition.onerror = (event) => console.error("音声認識エラー:", event.error);
+  setupAudio().then(() => startCountdown());
 }
 
 //==============================
-// 音声入力用マイク設定
+// マイク設定
 //==============================
 async function setupAudio() {
   audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -306,58 +270,47 @@ async function setupAudio() {
 function getVolume() {
   analyser.getByteFrequencyData(dataArray);
   let values = 0;
-  for (let i = 0; i < dataArray.length; i++) {
-    values += dataArray[i];
-  }
+  for (let i = 0; i < dataArray.length; i++) values += dataArray[i];
   return values / dataArray.length;
 }
-/*
-//==============================
-// カウントダウンとゲーム開始
-//==============================
-function startCountdown() {
-  const countdownEl = document.getElementById("countdown");
-  let count = 3;
-  countdownEl.innerText = count;
-  let timer = setInterval(() => {
-    count--;
-    if (count > 0) countdownEl.innerText = count;
-    else if (count === 0) countdownEl.innerText = "START!";
-    else {
-      clearInterval(timer);
-      countdownEl.style.display = "none";
-      gameStarted = true;
-      startMainTimer();
-
-      // 🎤 音声認識スタート
-      recognition.start();
-      console.log("音声認識スタート");
-    }
-  }, 1000);
-}
-*/
-
 
 //==============================
-// タイマー・ゴール表示
+// タイマー・ゴール・進捗バー
 //==============================
 let timeLeft = 10;
-
-// タイマー表示（最初から表示）
-
 const timerElement = document.createElement("div");
 timerElement.style.position = "absolute";
 timerElement.style.top = "20px";
 timerElement.style.left = "20px";
-timerElement.style.color = "brack";
+timerElement.style.color = "black";
 timerElement.style.fontSize = "32px";
 timerElement.style.fontFamily = "monospace";
 timerElement.style.zIndex = "9999";
 timerElement.textContent = `残り時間: ${timeLeft}`;
 gameArea.appendChild(timerElement);
 
-// ゴール表示
+// 進捗バー
+const progressBarBg = document.createElement("div");
+progressBarBg.style.position = "absolute";
+progressBarBg.style.bottom = "20px";
+progressBarBg.style.left = "50%";
+progressBarBg.style.transform = "translateX(-50%)";
+progressBarBg.style.width = "400px";
+progressBarBg.style.height = "30px";
+progressBarBg.style.backgroundColor = "#555";
+progressBarBg.style.border = "2px solid #000";
+progressBarBg.style.borderRadius = "5px";
+progressBarBg.style.zIndex = "9999";
+gameArea.appendChild(progressBarBg);
 
+const progressBar = document.createElement("div");
+progressBar.style.width = "0%";
+progressBar.style.height = "100%";
+progressBar.style.backgroundColor = "#0f0";
+progressBar.style.borderRadius = "3px";
+progressBarBg.appendChild(progressBar);
+
+// ゴール表示
 const goal = document.createElement("img");
 goal.src = "image/goal.png";
 goal.className = "sprite";
@@ -367,20 +320,33 @@ goal.style.top = "50%";
 goal.style.transform = "translate(-50%, -50%)";
 goal.style.zIndex = "9999";
 gameArea.appendChild(goal);
-goal.style.height = window.innerHeight + "px"; // 画面の高さに合わせる
-goal.style.width = "auto"; // 比率を保つ
+goal.style.height = window.innerHeight + "px";
+goal.style.width = "auto";
 
+const maxScroll = 2000;
+let goalReached = false;
 
-// 残り時間タイマー本処理
 function startMainTimer() {
   const timerInterval = setInterval(() => {
     if (isHit) return;
+
     timeLeft--;
     timerElement.textContent = `残り時間: ${timeLeft}`;
-    if (timeLeft <= 0) {
-      clearInterval(timerInterval);
+
+    let progress = Math.min(Math.abs(bgX) / maxScroll * 100, 100);
+    progressBar.style.width = progress + "%";
+
+    if (progress >= 100 && !goalReached) {
+      goalReached = true;
       goal.style.display = "block";
+      clearInterval(timerInterval);
+      alert("🎉 ゴール成功！");
     }
+
+    if (timeLeft <= 0 && !goalReached) {
+      clearInterval(timerInterval);
+      alert("⏰ 時間切れ！失敗です");
+    }
+
   }, 1000);
 }
-
