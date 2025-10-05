@@ -288,7 +288,7 @@ function getVolume() {
 //==============================
 // タイマー・ゴール・進捗バー
 //==============================
-let timeLeft = 10;
+let timeLeft = 30;
 const timerElement = document.createElement("div");
 timerElement.style.position = "absolute";
 timerElement.style.top = "20px";
@@ -334,7 +334,7 @@ gameArea.appendChild(goal);
 goal.style.height = window.innerHeight + "px";
 goal.style.width = "auto";
 
-const maxScroll = 2000;
+const maxScroll = 2200;
 let goalReached = false;
 
 function startMainTimer() {
@@ -347,7 +347,7 @@ function startMainTimer() {
     let progress = Math.min(Math.abs(bgX) / maxScroll * 100, 100);
     progressBar.style.width = progress + "%";
 
-    if (progress >= 100 && !goalReached) {
+    if (goalAppeared && distanceMoved >= 2200) {
       goalReached = true;
       goal.style.display = "block";
       clearInterval(timerInterval);
@@ -466,6 +466,7 @@ function updateObstacles() {
       // 衝突処理
       o.element.remove();
       obstacles.splice(i, 1);
+      animateGoalRetreat()
       triggerKnockback(); // ← 後退アニメーション呼び出し
     }
   }
@@ -477,16 +478,19 @@ setInterval(() => {
 }, obstacleSpawnInterval);
 function triggerKnockback() {
   isHit = true; // 後退中は操作禁止
-  const knockbackDistance = 100; // 後退距離
+  const knockbackDistance = 500; // 後退距離
   const duration = 1000; // ミリ秒（1秒で後退）
   const steps = 50; // アニメーション分割数
   const movePerStep = knockbackDistance / steps;
   const interval = duration / steps;
+  
 
   let step = 0;
 
   const knockbackTimer = setInterval(() => {
     bgX += movePerStep; // 背景を少しずつ右へ動かす
+    distanceMoved -= movePerStep;
+    if(distanceMoved < 0) distanceMoved = 0;
     gameArea.style.backgroundPosition = `${bgX}px 0px`;
     step++;
 
@@ -495,5 +499,26 @@ function triggerKnockback() {
       clearInterval(knockbackTimer);
       isHit = false; // 操作再開
     }
+  }, interval);
+}
+
+// ==============================
+// ゴールが遠ざかるアニメーション
+// ==============================
+function animateGoalRetreat() {
+  if (!goalAppeared) return; // ゴールが出ていないなら何もしない
+
+  const retreatDistance = 500; // 逃げる距離(px)
+  const duration = 1000; // アニメーション時間(ms)
+  const frames = 50; // フレーム数
+  const step = retreatDistance / frames;
+  const interval = duration / frames;
+
+  let frame = 0;
+  const retreatAnimation = setInterval(() => {
+    goalX += step; // ゴールを右方向に移動
+    goal.style.left = goalX + "px";
+    frame++;
+    if (frame >= frames) clearInterval(retreatAnimation);
   }, interval);
 }
