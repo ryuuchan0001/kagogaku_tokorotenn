@@ -101,7 +101,7 @@ function moveEnemy() {
 
 function shootBullet() {
   const bullet = document.createElement("img");
-  bullet.src = "../image/bind.png";
+  bullet.src = "image/bind.png";
   bullet.className = "bullet";
   gameArea.appendChild(bullet);
 
